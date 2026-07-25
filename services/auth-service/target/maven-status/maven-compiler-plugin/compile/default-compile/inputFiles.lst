@@ -1,0 +1,10 @@
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\AuthServiceApplication.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\config\SecurityConfig.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\controller\AuthController.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\entity\AppUser.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\model\AuthRequest.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\model\AuthResponse.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\model\RegisterRequest.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\repository\AppUserRepository.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\service\AuthService.java
+C:\Users\info\Downloads\pfa\services\auth-service\src\main\java\com\example\authservice\service\JwtService.java

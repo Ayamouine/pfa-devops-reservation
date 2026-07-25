@@ -1,0 +1,26 @@
+@startuml
+class User {
+  +username
+  +password
+  +role
+}
+class Reservation {
+  +id
+  +resource
+  +date
+  +status
+}
+class Notification {
+  +id
+  +message
+  +status
+}
+class Payment {
+  +id
+  +amount
+  +status
+}
+User --> Reservation
+Reservation --> Notification
+Reservation --> Payment
+@enduml

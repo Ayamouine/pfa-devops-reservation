@@ -1,0 +1,9 @@
+com\example\bookingservice\repository\BookingRepository.class
+com\example\bookingservice\service\NotificationClient.class
+com\example\bookingservice\controller\BookingController.class
+com\example\bookingservice\service\BookingService.class
+com\example\bookingservice\config\BookingDataLoader.class
+com\example\bookingservice\config\BookingClientConfig.class
+com\example\bookingservice\BookingServiceApplication.class
+com\example\bookingservice\model\Booking.class
+com\example\bookingservice\entity\BookingEntity.class

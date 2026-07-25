@@ -1,0 +1,19 @@
+@startuml
+left to right direction
+actor User
+actor Admin
+rectangle "Plateforme de réservation" {
+  usecase "S'inscrire"
+  usecase "Se connecter"
+  usecase "Voir les disponibilités"
+  usecase "Réserver une salle"
+  usecase "Gérer les réservations"
+  usecase "Recevoir une notification"
+}
+User --> "S'inscrire"
+User --> "Se connecter"
+User --> "Voir les disponibilités"
+User --> "Réserver une salle"
+User --> "Recevoir une notification"
+Admin --> "Gérer les réservations"
+@enduml

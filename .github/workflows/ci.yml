@@ -1,0 +1,37 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Build backend services
+        run: |
+          cd services/auth-service && mvn -q -DskipTests package
+          cd ../booking-service && mvn -q -DskipTests package
+          cd ../notification-service && mvn -q -DskipTests package
+          cd ../payment-service && mvn -q -DskipTests package
+
+      - name: Build frontend
+        run: |
+          cd frontend && npm install && npm run build
