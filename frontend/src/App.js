@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 
-const AUTH_URL = 'http://localhost:8081';
-const BOOKING_URL = 'http://localhost:8082';
-const NOTIFICATION_URL = 'http://localhost:8083';
-const PAYMENT_URL = 'http://localhost:8084';
+const AUTH_URL = process.env.REACT_APP_AUTH_URL || 'http://localhost:8081';
+const BOOKING_URL = process.env.REACT_APP_BOOKING_URL || 'http://localhost:8082';
+const NOTIFICATION_URL = process.env.REACT_APP_NOTIFICATION_URL || 'http://localhost:8083';
+const PAYMENT_URL = process.env.REACT_APP_PAYMENT_URL || 'http://localhost:8084';
 
 function App() {
   const [bookings, setBookings] = useState([]);
