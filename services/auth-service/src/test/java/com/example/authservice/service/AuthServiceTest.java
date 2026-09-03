@@ -29,7 +29,7 @@ class AuthServiceTest {
     void setUp() {
         userRepository = mock(AppUserRepository.class);
         passwordEncoder = new BCryptPasswordEncoder();
-        authService = new AuthService(userRepository, passwordEncoder);
+        authService = new AuthService(userRepository, passwordEncoder, "test-secret-key-for-unit-tests-only");
     }
 
     @Test

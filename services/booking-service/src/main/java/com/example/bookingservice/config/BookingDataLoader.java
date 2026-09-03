@@ -16,8 +16,8 @@ public class BookingDataLoader {
     CommandLineRunner seedBookings(BookingRepository bookingRepository) {
         return args -> {
             if (bookingRepository.count() == 0) {
-                bookingRepository.save(new BookingEntity("Salle A", LocalDate.of(2026, 7, 30), "confirmed"));
-                bookingRepository.save(new BookingEntity("Salle B", LocalDate.of(2026, 8, 1), "pending"));
+                bookingRepository.save(new BookingEntity("Salle A", LocalDate.of(2026, 7, 30), "confirmed", "aya"));
+                bookingRepository.save(new BookingEntity("Salle B", LocalDate.of(2026, 8, 1), "pending", "mouine"));
             }
         };
     }

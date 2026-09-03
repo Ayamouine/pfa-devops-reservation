@@ -10,4 +10,5 @@ import com.example.bookingservice.entity.BookingEntity;
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     boolean existsByResourceAndReservationDate(String resource, LocalDate reservationDate);
     List<BookingEntity> findByResource(String resource);
+    List<BookingEntity> findByUsername(String username);
 }

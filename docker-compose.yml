@@ -6,12 +6,26 @@ services:
       MYSQL_DATABASE: auth_db
     ports:
       - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 5s
       timeout: 5s
       retries: 20
       start_period: 30s
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+    ports:
+      - "8085:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   auth-service:
     build: ./services/auth-service
@@ -23,6 +37,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+      JWT_SECRET: ${JWT_SECRET:-my-super-secret-key-for-pfa-application-2026}
     depends_on:
       mysql:
         condition: service_healthy
@@ -46,13 +61,34 @@ services:
     build: ./services/notification-service
     ports:
       - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notification_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   payment-service:
     build: ./services/payment-service
     ports:
       - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
+      SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
+    depends_on:
+      mysql:
+        condition: service_healthy
 
   frontend:
     build: ./frontend
     ports:
-      - "3000:3000"
+      - "3001:3000"
+
+volumes:
+  mysql_data:

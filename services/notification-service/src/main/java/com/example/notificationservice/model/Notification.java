@@ -1,6 +1,17 @@
 package com.example.notificationservice.model;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "notifications")
 public class Notification {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String username;
     private String message;
@@ -10,6 +21,12 @@ public class Notification {
 
     public Notification(Long id, String username, String message, String status) {
         this.id = id;
+        this.username = username;
+        this.message = message;
+        this.status = status;
+    }
+
+    public Notification(String username, String message, String status) {
         this.username = username;
         this.message = message;
         this.status = status;

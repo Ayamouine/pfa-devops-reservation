@@ -1,27 +1,34 @@
 package com.example.paymentservice.service;
 
 import com.example.paymentservice.model.Payment;
+import com.example.paymentservice.repository.PaymentRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class PaymentService {
-    private final List<Payment> payments = new ArrayList<>();
 
-    public PaymentService() {
-        payments.add(new Payment(1L, "1", 150.0, "paid"));
+    private final PaymentRepository paymentRepository;
+
+    public PaymentService(PaymentRepository paymentRepository) {
+        this.paymentRepository = paymentRepository;
+        if (paymentRepository.count() == 0) {
+            paymentRepository.save(new Payment(null, "1", 150.0, "paid", "aya"));
+        }
     }
 
     public List<Payment> getPayments() {
-        return payments;
+        return paymentRepository.findAll();
+    }
+
+    public List<Payment> getPaymentsForUser(String username) {
+        return paymentRepository.findByUsername(username);
     }
 
     public Payment processPayment(Payment payment) {
-        payment.setId((long) (payments.size() + 1));
+        payment.setId(null);
         payment.setStatus("paid");
-        payments.add(payment);
-        return payment;
+        return paymentRepository.save(payment);
     }
 }

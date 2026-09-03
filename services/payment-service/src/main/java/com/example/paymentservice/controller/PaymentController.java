@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "http://localhost:3001")
 @RequestMapping("/payments")
 public class PaymentController {
 
@@ -26,6 +26,11 @@ public class PaymentController {
     @GetMapping
     public List<Payment> payments() {
         return paymentService.getPayments();
+    }
+
+    @GetMapping("/mine")
+    public List<Payment> myPayments(@org.springframework.web.bind.annotation.RequestParam String username) {
+        return paymentService.getPaymentsForUser(username);
     }
 
     @PostMapping

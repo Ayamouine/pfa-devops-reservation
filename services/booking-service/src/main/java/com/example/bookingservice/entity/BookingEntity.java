@@ -27,13 +27,17 @@ public class BookingEntity {
     @Column(nullable = false)
     private String status;
 
+    @Column(nullable = false)
+    private String username;
+
     public BookingEntity() {
     }
 
-    public BookingEntity(String resource, LocalDate reservationDate, String status) {
+    public BookingEntity(String resource, LocalDate reservationDate, String status, String username) {
         this.resource = resource;
         this.reservationDate = reservationDate;
         this.status = status;
+        this.username = username;
     }
 
     public Long getId() {
@@ -66,5 +70,13 @@ public class BookingEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }

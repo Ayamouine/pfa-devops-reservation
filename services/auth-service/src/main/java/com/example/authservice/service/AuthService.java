@@ -3,6 +3,7 @@ package com.example.authservice.service;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -20,14 +21,16 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class AuthService {
 
-    private static final String SECRET = "my-super-secret-key-for-pfa-application-2026";
-
+    private final String secret;
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(AppUserRepository userRepository,
+                        PasswordEncoder passwordEncoder,
+                        @Value("${jwt.secret}") String secret) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.secret = secret;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -58,7 +61,7 @@ public class AuthService {
                 .claim("role", user.getRole())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 3600000))
-                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
+                .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                 .compact();
     }
 }

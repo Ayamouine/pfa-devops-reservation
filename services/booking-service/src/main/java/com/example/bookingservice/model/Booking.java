@@ -5,14 +5,16 @@ public class Booking {
     private String resource;
     private String date;
     private String status;
+    private String username;
 
     public Booking() {}
 
-    public Booking(Long id, String resource, String date, String status) {
+    public Booking(Long id, String resource, String date, String status, String username) {
         this.id = id;
         this.resource = resource;
         this.date = date;
         this.status = status;
+        this.username = username;
     }
 
     public Long getId() { return id; }
@@ -23,4 +25,6 @@ public class Booking {
     public void setDate(String date) { this.date = date; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getUsername() { return username; }
+    public void setUsername(String username) { this.username = username; }
 }

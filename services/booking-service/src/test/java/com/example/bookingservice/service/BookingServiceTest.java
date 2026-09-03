@@ -9,6 +9,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.LocalDate;
+import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ class BookingServiceTest {
 
     @Test
     void createBooking_savesBooking_whenResourceIsAvailable() {
-        Booking request = new Booking(null, "Salle A", "2026-08-01", null);
+        Booking request = new Booking(null, "Salle A", "2026-08-01", null, "aya");
 
         when(bookingRepository.existsByResourceAndReservationDate("Salle A", LocalDate.parse("2026-08-01")))
                 .thenReturn(false);
@@ -54,7 +55,7 @@ class BookingServiceTest {
 
     @Test
     void createBooking_throwsConflict_whenResourceAlreadyBookedForSameDate() {
-        Booking request = new Booking(null, "Salle A", "2026-08-01", null);
+        Booking request = new Booking(null, "Salle A", "2026-08-01", null, "aya");
 
         when(bookingRepository.existsByResourceAndReservationDate("Salle A", LocalDate.parse("2026-08-01")))
                 .thenReturn(true);
@@ -70,7 +71,7 @@ class BookingServiceTest {
 
     @Test
     void createBooking_allowsSameResource_onDifferentDate() {
-        Booking request = new Booking(null, "Salle A", "2026-09-15", null);
+        Booking request = new Booking(null, "Salle A", "2026-09-15", null, "aya");
 
         when(bookingRepository.existsByResourceAndReservationDate("Salle A", LocalDate.parse("2026-09-15")))
                 .thenReturn(false);
@@ -85,5 +86,52 @@ class BookingServiceTest {
 
         assertThat(result.getResource()).isEqualTo("Salle A");
         assertThat(result.getDate()).isEqualTo("2026-09-15");
+    }
+
+    @Test
+    void cancelBooking_deletesBooking_whenRequesterIsOwner() {
+        BookingEntity entity = new BookingEntity("Salle A", LocalDate.parse("2026-08-01"), "pending", "aya");
+        entity.setId(1L);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(entity));
+
+        bookingService.cancelBooking(1L, "aya", "USER");
+
+        verify(bookingRepository).delete(entity);
+    }
+
+    @Test
+    void cancelBooking_deletesBooking_whenRequesterIsAdmin() {
+        BookingEntity entity = new BookingEntity("Salle A", LocalDate.parse("2026-08-01"), "pending", "aya");
+        entity.setId(1L);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(entity));
+
+        bookingService.cancelBooking(1L, "someAdmin", "ADMIN");
+
+        verify(bookingRepository).delete(entity);
+    }
+
+    @Test
+    void cancelBooking_throwsForbidden_whenRequesterIsNotOwnerNorAdmin() {
+        BookingEntity entity = new BookingEntity("Salle A", LocalDate.parse("2026-08-01"), "pending", "aya");
+        entity.setId(1L);
+
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(entity));
+
+        assertThatThrownBy(() -> bookingService.cancelBooking(1L, "otherUser", "USER"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("only cancel");
+
+        verify(bookingRepository, never()).delete(any(BookingEntity.class));
+    }
+
+    @Test
+    void cancelBooking_throwsNotFound_whenBookingDoesNotExist() {
+        when(bookingRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> bookingService.cancelBooking(99L, "aya", "USER"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("not found");
     }
 }
