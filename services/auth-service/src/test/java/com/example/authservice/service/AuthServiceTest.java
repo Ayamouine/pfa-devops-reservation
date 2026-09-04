@@ -29,7 +29,7 @@ class AuthServiceTest {
     void setUp() {
         userRepository = mock(AppUserRepository.class);
         passwordEncoder = new BCryptPasswordEncoder();
-        authService = new AuthService(userRepository, passwordEncoder, "test-secret-key-for-unit-tests-only");
+        authService = new AuthService(userRepository, passwordEncoder, "test-secret-key-for-unit-tests-only", "test-admin-code");
     }
 
     @Test
@@ -61,6 +61,38 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.register(request))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("already exists");
+    }
+
+    @Test
+    void register_createsAdmin_whenAdminCodeIsCorrect() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("boss");
+        request.setPassword("secret123");
+        request.setRole("ADMIN");
+        request.setAdminCode("test-admin-code");
+
+        when(userRepository.existsByUsername("boss")).thenReturn(false);
+        when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.getRole()).isEqualTo("ADMIN");
+    }
+
+    @Test
+    void register_throwsForbidden_whenAdminCodeIsWrong() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("boss");
+        request.setPassword("secret123");
+        request.setRole("ADMIN");
+        request.setAdminCode("wrong-code");
+
+        when(userRepository.existsByUsername("boss")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Code administrateur invalide");
     }
 
     @Test

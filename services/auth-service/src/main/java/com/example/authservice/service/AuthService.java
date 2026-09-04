@@ -22,15 +22,18 @@ import io.jsonwebtoken.security.Keys;
 public class AuthService {
 
     private final String secret;
+    private final String adminRegistrationCode;
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
     public AuthService(AppUserRepository userRepository,
                         PasswordEncoder passwordEncoder,
-                        @Value("${jwt.secret}") String secret) {
+                        @Value("${jwt.secret}") String secret,
+                        @Value("${admin.registration.code}") String adminRegistrationCode) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.secret = secret;
+        this.adminRegistrationCode = adminRegistrationCode;
     }
 
     public AuthResponse register(RegisterRequest request) {
@@ -38,8 +41,19 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
         }
 
-        String role = request.getRole() == null || request.getRole().isBlank() ? "USER" : request.getRole();
-        AppUser user = new AppUser(request.getUsername(), passwordEncoder.encode(request.getPassword()), role);
+        String requestedRole = request.getRole() == null || request.getRole().isBlank() ? "USER" : request.getRole();
+
+        String finalRole;
+        if ("ADMIN".equalsIgnoreCase(requestedRole)) {
+            if (request.getAdminCode() == null || !adminRegistrationCode.equals(request.getAdminCode())) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Code administrateur invalide");
+            }
+            finalRole = "ADMIN";
+        } else {
+            finalRole = "USER";
+        }
+
+        AppUser user = new AppUser(request.getUsername(), passwordEncoder.encode(request.getPassword()), finalRole);
         AppUser savedUser = userRepository.save(user);
         return new AuthResponse(generateToken(savedUser), savedUser.getUsername(), savedUser.getRole());
     }

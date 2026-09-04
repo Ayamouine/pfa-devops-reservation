@@ -5,7 +5,7 @@ import { useAuth } from '../AuthContext';
 export default function RegisterPage() {
   const { register, showToast } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', password: '', role: 'USER' });
+  const [form, setForm] = useState({ username: '', password: '', role: 'USER', adminCode: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -42,6 +42,27 @@ export default function RegisterPage() {
             <label htmlFor="password">Mot de passe</label>
             <input id="password" type="password" name="password" value={form.password} onChange={handleChange} required />
           </div>
+          <div className="field">
+            <label htmlFor="role">Type de compte</label>
+            <select id="role" name="role" value={form.role} onChange={handleChange}>
+              <option value="USER">Utilisateur</option>
+              <option value="ADMIN">Administrateur</option>
+            </select>
+          </div>
+          {form.role === 'ADMIN' && (
+            <div className="field">
+              <label htmlFor="adminCode">Code administrateur</label>
+              <input
+                id="adminCode"
+                type="password"
+                name="adminCode"
+                placeholder="Requis pour créer un compte administrateur"
+                value={form.adminCode}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          )}
           <button type="submit" className="btn btn-accent btn-block" disabled={loading}>
             {loading ? 'Création…' : 'Créer le compte'}
           </button>
