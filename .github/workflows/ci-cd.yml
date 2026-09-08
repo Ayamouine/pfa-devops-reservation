@@ -13,7 +13,6 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_REPO: ${{ lower(github.repository) }}
   IMAGE_TAG: sha-${{ github.sha }}
 
 permissions:
@@ -112,6 +111,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute image repo (lowercase)
+        run: echo "IMAGE_REPO=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
       - name: Build Docker image
         run: docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/${{ matrix.name }}:${{ env.IMAGE_TAG }} ${{ matrix.context }}
 
@@ -156,6 +158,9 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image repo (lowercase)
+        run: echo "IMAGE_REPO=${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
 
       - name: Pull built images
         run: |
