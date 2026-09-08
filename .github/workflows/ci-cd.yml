@@ -141,7 +141,12 @@ jobs:
 
       - name: Collect logs on failure
         if: failure()
-        run: docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=200
+        run: |
+          {
+            docker ps -a
+            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=200
+          } > /tmp/e2e_diag.log 2>&1 || true
+          while IFS= read -r line; do echo "::error::[e2e] $line"; done < /tmp/e2e_diag.log
 
   deploy-kind:
     name: Deploy & health-check on Kubernetes (kind)
@@ -184,6 +189,16 @@ jobs:
             kind load docker-image ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
           done
 
+      - name: Debug image load on failure
+        if: failure()
+        run: |
+          {
+            kind version
+            docker image ls ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}
+            kubectl cluster-info
+          } > /tmp/kind_diag.log 2>&1 || true
+          while IFS= read -r line; do echo "::error::[kind] $line"; done < /tmp/kind_diag.log
+
       - name: Apply manifests and pin image tags
         run: |
           kubectl apply -f k8s/
@@ -195,6 +210,16 @@ jobs:
         run: |
           for name in mysql auth-service booking-service notification-service payment-service frontend; do
             kubectl rollout status deployment/$name --timeout=300s
+          done
+
+      - name: Debug pods state on failure
+        if: failure()
+        run: |
+          kubectl get pods -o wide
+          kubectl get events --sort-by=.lastTimestamp | tail -80
+          for name in mysql auth-service booking-service notification-service payment-service frontend; do
+            pods=$(kubectl get pods -l app=$name -o name 2>/dev/null || true)
+            for p in $pods; do echo "===== $p ====="; kubectl logs $p --tail=50 || true; done
           done
 
       - name: Health-check the microservices
