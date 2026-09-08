@@ -13,6 +13,7 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
+  IMAGE_REPO: ${{ lower(github.repository) }}
   IMAGE_TAG: sha-${{ github.sha }}
 
 permissions:
@@ -112,14 +113,14 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Docker image
-        run: docker build -t ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.name }}:${{ env.IMAGE_TAG }} ${{ matrix.context }}
+        run: docker build -t ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/${{ matrix.name }}:${{ env.IMAGE_TAG }} ${{ matrix.context }}
 
       - name: Push image to GHCR
         if: github.event_name != 'pull_request'
         run: |
-          docker tag ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.name }}:${{ env.IMAGE_TAG }} ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.name }}:latest
-          docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.name }}:${{ env.IMAGE_TAG }}
-          docker push ${{ env.REGISTRY }}/${{ github.repository }}/${{ matrix.name }}:latest
+          docker tag ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/${{ matrix.name }}:${{ env.IMAGE_TAG }} ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/${{ matrix.name }}:latest
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/${{ matrix.name }}:${{ env.IMAGE_TAG }}
+          docker push ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/${{ matrix.name }}:latest
 
   e2e-tests:
     name: E2E tests (Cypress)
@@ -159,7 +160,7 @@ jobs:
       - name: Pull built images
         run: |
           for name in auth-service booking-service notification-service payment-service frontend; do
-            docker pull ${{ env.REGISTRY }}/${{ github.repository }}/$name:${{ env.IMAGE_TAG }}
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
           done
 
       - name: Create kind cluster
@@ -175,14 +176,14 @@ jobs:
       - name: Load images into the cluster
         run: |
           for name in auth-service booking-service notification-service payment-service frontend; do
-            kind load docker-image ${{ env.REGISTRY }}/${{ github.repository }}/$name:${{ env.IMAGE_TAG }}
+            kind load docker-image ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
           done
 
       - name: Apply manifests and pin image tags
         run: |
           kubectl apply -f k8s/
           for name in auth-service booking-service notification-service payment-service frontend; do
-            kubectl set image deployment/$name $name=${{ env.REGISTRY }}/${{ github.repository }}/$name:${{ env.IMAGE_TAG }}
+            kubectl set image deployment/$name $name=${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
           done
 
       - name: Wait for rollouts
