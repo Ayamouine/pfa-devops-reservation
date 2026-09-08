@@ -1,0 +1,34 @@
+services:
+  frontend:
+    command: sh -c "npm run build && npx -y serve -s build -l 3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000/"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 60s
+
+  cypress:
+    image: cypress/included:12.17.0
+    depends_on:
+      auth-service:
+        condition: service_healthy
+      booking-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      frontend:
+        condition: service_healthy
+    environment:
+      # Cypress will pick up CYPRESS_* env vars as configuration for tests if needed
+      CYPRESS_BASE_URL: http://frontend:3000
+      AUTH_URL: http://auth-service:8081
+      BOOKING_URL: http://booking-service:8082
+      PAYMENT_URL: http://payment-service:8084
+    volumes:
+      - ./frontend:/e2e:cached
+    working_dir: /e2e
+    # Run Cypress using the bundled binary in the image
+    command: ["cypress", "run", "--config", "baseUrl=http://frontend:3000", "--spec", "cypress/e2e/**/*.cy.js"]
+    networks:
+      - default

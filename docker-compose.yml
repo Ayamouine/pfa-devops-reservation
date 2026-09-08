@@ -31,6 +31,12 @@ services:
     build: ./services/auth-service
     ports:
       - "8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8081/auth/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 300s
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/auth_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
@@ -46,6 +52,12 @@ services:
     build: ./services/booking-service
     ports:
       - "8082:8082"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8082/bookings/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 300s
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/booking_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
@@ -61,6 +73,12 @@ services:
     build: ./services/notification-service
     ports:
       - "8083:8083"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8083/notifications/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 300s
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notification_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
@@ -75,6 +93,12 @@ services:
     build: ./services/payment-service
     ports:
       - "8084:8084"
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:8084/payments/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 36
+      start_period: 300s
     environment:
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/payment_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
@@ -88,7 +112,18 @@ services:
   frontend:
     build: ./frontend
     ports:
-      - "3001:3000"
+      - "3002:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000/"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 180s
+    environment:
+      - REACT_APP_AUTH_URL=http://auth-service:8081
+      - REACT_APP_BOOKING_URL=http://booking-service:8082
+      - REACT_APP_NOTIFICATION_URL=http://notification-service:8083
+      - REACT_APP_PAYMENT_URL=http://payment-service:8084
 
 volumes:
   mysql_data:

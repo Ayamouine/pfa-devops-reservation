@@ -25,6 +25,18 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8082
+          livenessProbe:
+            httpGet:
+              path: /bookings/health
+              port: 8082
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /bookings/health
+              port: 8082
+            initialDelaySeconds: 5
+            periodSeconds: 5
           env:
             - name: SPRING_DATASOURCE_URL
               value: "jdbc:mysql://mysql:3306/booking_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"

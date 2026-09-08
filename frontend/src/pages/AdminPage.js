@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { BOOKING_URL, statusClass, statusLabel } from '../api';
+import { BOOKING_URL, statusClass, statusLabel, getResources, createResource, updateResource, deleteResource } from '../api';
 import { useAuth } from '../AuthContext';
 import { authHeaders } from '../api';
 
@@ -78,6 +78,74 @@ useEffect(() => {
           </div>
         )}
       </section>
+
+      <section className="card" style={{ marginTop: 20 }}>
+        <h2>Gérer les ressources</h2>
+        <ResourceManager token={token} />
+      </section>
+    </div>
+  );
+}
+
+function ResourceManager({ token }) {
+  const [list, setList] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [form, setForm] = React.useState({ name: '', capacity: 10, location: '', price: 0 });
+  const [editing, setEditing] = React.useState(null);
+
+  const load = () => {
+    setLoading(true);
+    getResources().then((r) => { setList(r || []); setLoading(false); }).catch(() => { setList([]); setLoading(false); });
+  };
+
+  React.useEffect(() => { load(); }, []);
+
+  const save = async () => {
+    if (!form.name) return alert('Le nom est requis');
+    try {
+      if (editing) {
+        await updateResource(token, editing.id || editing.name, form);
+      } else {
+        await createResource(token, form);
+      }
+      setForm({ name: '', capacity: 10, location: '', price: 0 });
+      setEditing(null);
+      load();
+    } catch (err) { alert(err.message || 'Erreur'); }
+  };
+
+  const remove = async (r) => {
+    if (!confirm(`Supprimer ${r.name} ?`)) return;
+    try { await deleteResource(token, r.id || r.name); load(); } catch (e) { alert('Impossible de supprimer'); }
+  };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+        <input placeholder="Nom" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+        <input type="number" placeholder="Capacité" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })} />
+        <input placeholder="Emplacement" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+        <input type="number" placeholder="Prix" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+        <button className="btn btn-primary" onClick={save}>{editing ? 'Mettre à jour' : 'Créer'}</button>
+      </div>
+
+      {loading && <p className="empty-state">Chargement…</p>}
+      {!loading && list.length === 0 && <p className="empty-state">Aucune ressource définie.</p>}
+      {!loading && list.length > 0 && (
+        <div className="simple-list">
+          {list.map((r) => (
+            <div key={r.id || r.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+              <div>
+                <strong>{r.name}</strong> · {r.location} · cap {r.capacity} · {r.price}€
+              </div>
+              <div>
+                <button className="btn btn-ghost" onClick={() => { setEditing(r); setForm({ name: r.name, capacity: r.capacity || 10, location: r.location || '', price: r.price || 0 }); }}>Éditer</button>
+                <button className="btn btn-danger-outline" onClick={() => remove(r)}>Supprimer</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

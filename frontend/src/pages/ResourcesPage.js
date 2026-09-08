@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BOOKING_URL, authHeaders } from '../api';
+import { BOOKING_URL, authHeaders, getResources as apiGetResources } from '../api';
 import { useAuth } from '../AuthContext';
 
 export default function ResourcesPage() {
@@ -9,8 +9,7 @@ export default function ResourcesPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${BOOKING_URL}/bookings/resources`, { headers: authHeaders(token) })
-      .then((res) => res.json())
+    apiGetResources()
       .then(setAllBookings)
       .catch(() => setAllBookings([]))
       .finally(() => setLoading(false));
@@ -43,7 +42,9 @@ export default function ResourcesPage() {
             {resourceNames.map((name) => (
               <div className="resource-card" key={name}>
                 <div className="resource-card-header">
-                  <span className="ticket-resource">{name}</span>
+                  <span className="ticket-resource">
+                    <Link to={`/ressources/${encodeURIComponent(name)}`}>{name}</Link>
+                  </span>
                   <span className="stat-label">{resources[name].length} réservation(s)</span>
                 </div>
                 <p className="availability-hint">

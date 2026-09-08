@@ -1,8 +1,11 @@
 package com.example.bookingservice.controller;
 
-import com.example.bookingservice.model.Booking;
-import com.example.bookingservice.service.BookingService;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -11,14 +14,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.CrossOrigin;
 
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.example.bookingservice.model.Booking;
+import com.example.bookingservice.service.BookingService;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3001")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 @RequestMapping("/bookings")
 public class BookingController {
 
@@ -39,6 +40,12 @@ public class BookingController {
                 .filter(b -> !"cancelled".equalsIgnoreCase(b.getStatus()))
                 .map(b -> Map.of("resource", b.getResource(), "date", b.getDate()))
                 .collect(Collectors.toList());
+    }
+
+    @GetMapping("/availability")
+    public Map<String, Object> checkAvailability(@RequestParam String resource, @RequestParam String date) {
+        boolean ok = bookingService.isAvailable(resource, java.time.LocalDate.parse(date));
+        return Map.of("resource", resource, "date", date, "available", ok);
     }
 
     @GetMapping("/mine")

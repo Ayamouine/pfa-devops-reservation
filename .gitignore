@@ -20,5 +20,11 @@ npm-debug.log*
 *-logs.txt
 auth-logs.txt
 
+# --- Cypress ---
+cypress/screenshots/
+cypress/videos/
+frontend/cypress/screenshots/
+frontend/cypress/videos/
+
 # --- Environnement ---
 .env

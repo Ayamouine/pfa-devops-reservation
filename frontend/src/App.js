@@ -7,11 +7,14 @@ import ToastStack from './components/Toast';
 import ConfirmModal from './components/ConfirmModal';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
+import ForgotResetPage from './pages/ForgotResetPage';
 import DashboardPage from './pages/DashboardPage';
 import MyBookingsPage from './pages/MyBookingsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
+import ResourceDetail from './pages/ResourceDetail';
+import CalendarPage from './pages/CalendarPage';
 
 function Layout({ children }) {
   return (
@@ -48,11 +51,15 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<PublicOnlyRoute><LoginPage /></PublicOnlyRoute>} />
       <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
+      <Route path="/forgot" element={<PublicOnlyRoute><ForgotResetPage /></PublicOnlyRoute>} />
+      <Route path="/reset" element={<PublicOnlyRoute><ForgotResetPage /></PublicOnlyRoute>} />
       <Route path="/" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
       <Route path="/reservations" element={<PrivateRoute><MyBookingsPage /></PrivateRoute>} />
       <Route path="/ressources" element={<PrivateRoute><ResourcesPage /></PrivateRoute>} />
+      <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
       <Route path="/profil" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+      <Route path="/ressources/:id" element={<PrivateRoute><ResourceDetail /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

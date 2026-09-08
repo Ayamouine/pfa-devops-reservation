@@ -31,4 +31,8 @@ public class PaymentService {
         payment.setStatus("paid");
         return paymentRepository.save(payment);
     }
+
+    public java.util.Optional<Payment> getPaymentById(Long id) {
+        return paymentRepository.findById(id);
+    }
 }

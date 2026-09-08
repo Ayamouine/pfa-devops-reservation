@@ -16,7 +16,7 @@ import com.example.authservice.model.RegisterRequest;
 import com.example.authservice.service.AuthService;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3001")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
 @RequestMapping("/auth")
 public class AuthController {
 
@@ -39,5 +39,33 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refresh(@RequestBody java.util.Map<String, String> body) {
+        String refreshToken = body.get("refreshToken");
+        return ResponseEntity.ok(authService.refresh(refreshToken));
+    }
+
+    @PostMapping("/forgot")
+    public ResponseEntity<java.util.Map<String, String>> forgot(@RequestBody java.util.Map<String, String> body) {
+        String username = body.get("username");
+        String token = authService.createPasswordResetToken(username);
+        // In real life, send by email. Here return token for demo.
+        return ResponseEntity.ok(java.util.Map.of("resetToken", token));
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<Void> reset(@RequestBody java.util.Map<String, String> body) {
+        String token = body.get("token");
+        String newPassword = body.get("newPassword");
+        authService.resetPassword(token, newPassword);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/verify")
+    public ResponseEntity<Void> verify(@org.springframework.web.bind.annotation.RequestParam String token) {
+        authService.verifyAccount(token);
+        return ResponseEntity.noContent().build();
     }
 }

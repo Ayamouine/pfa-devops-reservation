@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { BOOKING_URL, PAYMENT_URL, authHeaders, statusClass, statusLabel } from '../api';
+import { BOOKING_URL, PAYMENT_URL, authHeaders, statusClass, statusLabel, createBooking as apiCreateBooking, checkAvailability as apiCheckAvailability, pay as apiPay, confirmBooking as apiConfirmBooking, cancelBooking as apiCancelBooking, getResources as apiGetResources } from '../api';
 
 export default function MyBookingsPage() {
   const { currentUser, token, showToast, askConfirm } = useAuth();
@@ -16,11 +16,10 @@ export default function MyBookingsPage() {
   const [savingEdit, setSavingEdit] = useState(false);
 
 const loadAll = useCallback(() => {
-  fetch(`${BOOKING_URL}/bookings/resources`, { headers: authHeaders(token) })
-    .then((res) => res.json())
+  apiGetResources()
     .then(setAllBookings)
     .catch(() => setAllBookings([]));
-}, [token]);
+}, []);
 
 const loadMine = useCallback(() => {
   fetch(`${BOOKING_URL}/bookings/mine?username=${encodeURIComponent(currentUser.username)}`, { headers: authHeaders(token) })
@@ -47,16 +46,7 @@ const loadMine = useCallback(() => {
     setBookingError('');
     setBookingMessage('');
     try {
-      const res = await fetch(`${BOOKING_URL}/bookings`, {
-        method: 'POST',
-        headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ ...bookingForm, status: 'pending', username: currentUser.username }),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(res.status === 409 ? 'Cette ressource est déjà réservée pour cette date.' : errText || `Erreur ${res.status}`);
-      }
-      const data = await res.json();
+      const data = await apiCreateBooking(token, { ...bookingForm, status: 'pending', username: currentUser.username });
       setBookingMessage(`Réservation créée : ${data.resource} le ${data.date}.`);
       setBookingForm({ resource: '', date: '' });
       refresh();
@@ -69,12 +59,7 @@ const loadMine = useCallback(() => {
     askConfirm(`Annuler la réservation "${booking.resource}" du ${booking.date} ?`, async () => {
       setCancellingId(booking.id);
       try {
-        const params = new URLSearchParams({ username: currentUser.username, role: currentUser.role });
-        const res = await fetch(`${BOOKING_URL}/bookings/${booking.id}?${params.toString()}`, {
-          method: 'DELETE',
-          headers: authHeaders(token),
-        });
-        if (!res.ok && res.status !== 204) throw new Error(await res.text());
+        await apiCancelBooking(token, booking.id, currentUser.username, currentUser.role);
         showToast('Réservation annulée.', 'success');
         refresh();
       } catch (err) {
@@ -88,20 +73,8 @@ const loadMine = useCallback(() => {
   const handlePayBooking = async (booking) => {
     setPayingId(booking.id);
     try {
-      const payRes = await fetch(`${PAYMENT_URL}/payments`, {
-        method: 'POST',
-        headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ reservationId: String(booking.id), amount: 150, username: currentUser.username }),
-      });
-      if (!payRes.ok) throw new Error(await payRes.text());
-
-      const params = new URLSearchParams({ username: currentUser.username, role: currentUser.role });
-      const confirmRes = await fetch(`${BOOKING_URL}/bookings/${booking.id}/confirm?${params.toString()}`, {
-        method: 'POST',
-        headers: authHeaders(token),
-      });
-      if (!confirmRes.ok) throw new Error(await confirmRes.text());
-
+      await apiPay(token, { reservationId: String(booking.id), amount: 150, username: currentUser.username });
+      await apiConfirmBooking(token, booking.id, currentUser.username, currentUser.role);
       showToast('Paiement effectué, réservation confirmée.', 'success');
       refresh();
     } catch (err) {

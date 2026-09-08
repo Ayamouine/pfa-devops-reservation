@@ -3,6 +3,8 @@ package com.example.bookingservice.service;
 import java.time.LocalDate;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +16,8 @@ import com.example.bookingservice.repository.BookingRepository;
 
 @Service
 public class BookingService {
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
+
     private final BookingRepository bookingRepository;
     private final NotificationClient notificationClient;
 
@@ -28,6 +32,10 @@ public class BookingService {
 
     public List<Booking> getBookingsForUser(String username) {
         return bookingRepository.findByUsername(username).stream().map(this::toModel).toList();
+    }
+
+    public boolean isAvailable(String resource, java.time.LocalDate date) {
+        return !bookingRepository.existsByResourceAndReservationDate(resource, date);
     }
 
     @Transactional
@@ -48,11 +56,7 @@ public class BookingService {
                 booking.getStatus() == null ? "pending" : booking.getStatus(),
                 username));
 
-        notificationClient.sendReservationNotification(
-            saved.getUsername(),
-            saved.getResource(),
-            saved.getReservationDate().toString(),
-            saved.getStatus());
+        tryNotify(saved.getUsername(), saved.getResource(), saved.getReservationDate().toString(), saved.getStatus());
 
         return toModel(saved);
     }
@@ -72,11 +76,7 @@ public class BookingService {
         entity.setStatus("confirmed");
         BookingEntity saved = bookingRepository.save(entity);
 
-        notificationClient.sendReservationNotification(
-            saved.getUsername(),
-            saved.getResource(),
-            saved.getReservationDate().toString(),
-            "confirmed");
+        tryNotify(saved.getUsername(), saved.getResource(), saved.getReservationDate().toString(), "confirmed");
 
         return toModel(saved);
     }
@@ -106,11 +106,7 @@ public class BookingService {
         entity.setStatus("pending");
         BookingEntity saved = bookingRepository.save(entity);
 
-        notificationClient.sendReservationNotification(
-            saved.getUsername(),
-            saved.getResource(),
-            saved.getReservationDate().toString(),
-            "modifiee");
+        tryNotify(saved.getUsername(), saved.getResource(), saved.getReservationDate().toString(), "modifiee");
 
         return toModel(saved);
     }
@@ -129,11 +125,16 @@ public class BookingService {
 
         bookingRepository.delete(entity);
 
-        notificationClient.sendReservationNotification(
-            entity.getUsername(),
-            entity.getResource(),
-            entity.getReservationDate().toString(),
-            "cancelled");
+        tryNotify(entity.getUsername(), entity.getResource(), entity.getReservationDate().toString(), "cancelled");
+    }
+
+    private void tryNotify(String username, String resource, String date, String status) {
+        try {
+            notificationClient.sendReservationNotification(username, resource, date, status);
+        } catch (Exception e) {
+            log.warn("Notification service unreachable; booking kept (resource={}, date={}, status={}): {}",
+                    resource, date, status, e.getMessage());
+        }
     }
 
     private Booking toModel(BookingEntity entity) {

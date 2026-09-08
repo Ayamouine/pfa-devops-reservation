@@ -18,18 +18,34 @@ import com.example.authservice.model.AuthRequest;
 import com.example.authservice.model.AuthResponse;
 import com.example.authservice.model.RegisterRequest;
 import com.example.authservice.repository.AppUserRepository;
+import com.example.authservice.repository.PasswordResetTokenRepository;
+import com.example.authservice.repository.RefreshTokenRepository;
+import com.example.authservice.repository.VerificationTokenRepository;
 
 class AuthServiceTest {
 
     private AppUserRepository userRepository;
     private PasswordEncoder passwordEncoder;
+    private RefreshTokenRepository refreshTokenRepository;
+    private VerificationTokenRepository verificationTokenRepository;
+    private PasswordResetTokenRepository passwordResetTokenRepository;
     private AuthService authService;
 
     @BeforeEach
     void setUp() {
         userRepository = mock(AppUserRepository.class);
         passwordEncoder = new BCryptPasswordEncoder();
-        authService = new AuthService(userRepository, passwordEncoder, "test-secret-key-for-unit-tests-only", "test-admin-code");
+        refreshTokenRepository = mock(RefreshTokenRepository.class);
+        verificationTokenRepository = mock(VerificationTokenRepository.class);
+        passwordResetTokenRepository = mock(PasswordResetTokenRepository.class);
+        authService = new AuthService(
+                userRepository,
+                passwordEncoder,
+                refreshTokenRepository,
+                verificationTokenRepository,
+                passwordResetTokenRepository,
+                "test-secret-key-for-unit-tests-only",
+                "test-admin-code");
     }
 
     @Test
