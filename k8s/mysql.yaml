@@ -27,14 +27,14 @@ spec:
               value: "auth_db"
           readinessProbe:
             exec:
-              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+              command: ["sh", "-c", "mysqladmin ping -h127.0.0.1 -uroot -proot"]
             initialDelaySeconds: 15
             periodSeconds: 5
             timeoutSeconds: 5
             failureThreshold: 10
           livenessProbe:
             exec:
-              command: ["mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+              command: ["sh", "-c", "mysqladmin ping -h127.0.0.1 -uroot -proot"]
             initialDelaySeconds: 30
             periodSeconds: 10
 ---
