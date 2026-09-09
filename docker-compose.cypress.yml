@@ -30,7 +30,10 @@ services:
     volumes:
       - ./frontend:/e2e:cached
     working_dir: /e2e
+    # cypress/included already sets ENTRYPOINT ["cypress","run"]; reset it and
+    # provide the full command explicitly to avoid duplicated "cypress run".
+    entrypoint: []
     # Run Cypress using the bundled binary in the image
-    command: ["cypress", "run", "--config", "baseUrl=http://frontend:3000", "--spec", "cypress/e2e/**/*.cy.js"]
+    command: ["cypress", "run", "--config", "baseUrl=http://frontend:3000", "--reporter", "junit", "--reporter-options", "mochaFile=/e2e/cypress/results/junit.xml", "--spec", "cypress/e2e/**/*.cy.js"]
     networks:
       - default

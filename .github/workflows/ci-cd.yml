@@ -143,16 +143,22 @@ jobs:
         if: failure()
         run: |
           {
+            echo "=== docker ps -a ==="
             docker ps -a
+            echo "=== cypress docker logs ==="
             cid=$(docker ps -aq --filter name=cypress 2>/dev/null | head -1)
-            if [ -n "$cid" ]; then
-              echo "--- cypress container logs (tail 500) ---"
-              docker logs --tail=500 "$cid" 2>&1
-            fi
-            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=300
+            if [ -n "$cid" ]; then docker logs --tail=400 "$cid" 2>&1; fi
+            echo "=== junit results ==="
+            cat frontend/cypress/results/junit.xml 2>/dev/null || echo "(no junit.xml)"
+            echo "=== compose logs ==="
+            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=200
           } > /tmp/e2e_diag.log 2>&1 || true
-          head -n 700 /tmp/e2e_diag.log > /tmp/e2e_diag_trim.log
-          while IFS= read -r line; do echo "::error::[e2e] $line"; done < /tmp/e2e_diag_trim.log
+          i=0
+          split -b 45000 -d -a1 /tmp/e2e_diag.log /tmp/echunk_
+          for f in /tmp/echunk_*; do
+            echo "::error::[e2e]c$i $(base64 -w0 "$f" | tr -d '\n')"
+            i=$((i+1))
+          done
 
   deploy-kind:
     name: Deploy & health-check on Kubernetes (kind)
@@ -210,8 +216,12 @@ jobs:
               kind load docker-image "$img" 2>&1 || echo "KIND LOAD FAILED for $name"
             done
           } > /tmp/kind_diag.log 2>&1 || true
-          head -n 400 /tmp/kind_diag.log > /tmp/kind_diag_trim.log
-          while IFS= read -r line; do echo "::error::[kind] $line"; done < /tmp/kind_diag_trim.log
+          i=0
+          split -b 45000 -d -a1 /tmp/kind_diag.log /tmp/kchunk_
+          for f in /tmp/kchunk_*; do
+            echo "::error::[kind]c$i $(base64 -w0 "$f" | tr -d '\n')"
+            i=$((i+1))
+          done
 
       - name: Apply manifests and pin image tags
         run: |
