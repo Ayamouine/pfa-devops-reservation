@@ -144,7 +144,7 @@ jobs:
         run: |
           {
             echo "=== cypress docker logs ==="
-            cid=$(docker ps -aq --filter name=cypress 2>/dev/null | head -1)
+            cid=$(docker ps -aq --filter name=cypress 2>/dev/null | head -1) || true
             if [ -n "$cid" ]; then docker logs --tail=300 "$cid" 2>&1; fi
             echo "=== junit results ==="
             cat frontend/cypress/results/junit.xml 2>/dev/null || echo "(no junit.xml)"
@@ -188,11 +188,6 @@ jobs:
         with:
           cluster_name: pfa-ci
 
-      - name: Install default StorageClass (local-path) for the MySQL PVC
-        run: |
-          kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v0.0.26/deploy/local-path-storage.yaml
-          kubectl patch storageclass local-path -p '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-
       - name: Load images into the cluster
         run: |
           for name in auth-service booking-service notification-service payment-service frontend; do
@@ -224,12 +219,10 @@ jobs:
         run: |
           {
             echo "=== pods ==="
-            kubectl get pods -o wide
-            echo "=== events ==="
-            kubectl get events --sort-by=.lastTimestamp | tail -60
+            kubectl get pods -o wide || true
             for name in mysql auth-service booking-service notification-service payment-service frontend; do
-              echo "=== deployment $name logs ==="
-              kubectl logs "deployment/$name" --tail=60 2>&1 | tail -60 || true
+              echo "=== deployment $name logs (tail 30) ==="
+              kubectl logs "deployment/$name" --tail=30 2>&1 | tail -30 || true
             done
           } > /tmp/kind_diag.log 2>&1 || true
           i=0
