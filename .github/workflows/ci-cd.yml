@@ -143,18 +143,16 @@ jobs:
         if: failure()
         run: |
           {
-            echo "=== docker ps -a ==="
-            docker ps -a
             echo "=== cypress docker logs ==="
             cid=$(docker ps -aq --filter name=cypress 2>/dev/null | head -1)
-            if [ -n "$cid" ]; then docker logs --tail=400 "$cid" 2>&1; fi
+            if [ -n "$cid" ]; then docker logs --tail=300 "$cid" 2>&1; fi
+            echo "=== auth-service logs (tail 300) ==="
+            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=300 auth-service 2>&1 || true
             echo "=== junit results ==="
             cat frontend/cypress/results/junit.xml 2>/dev/null || echo "(no junit.xml)"
-            echo "=== compose logs ==="
-            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=200
           } > /tmp/e2e_diag.log 2>&1 || true
           i=0
-          split -b 45000 -d -a1 /tmp/e2e_diag.log /tmp/echunk_
+          split -b 30000 -d -a1 /tmp/e2e_diag.log /tmp/echunk_
           for f in /tmp/echunk_*; do
             echo "::error::[e2e]c$i $(base64 -w0 "$f" | tr -d '\n')"
             i=$((i+1))
@@ -198,7 +196,7 @@ jobs:
       - name: Load images into the cluster
         run: |
           for name in auth-service booking-service notification-service payment-service frontend; do
-            kind load docker-image ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
+            kind load docker-image --name pfa-ci ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
           done
 
       - name: Debug image load on failure
@@ -213,7 +211,7 @@ jobs:
             for name in auth-service booking-service notification-service payment-service frontend; do
               img=${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
               echo "### kind load $img"
-              kind load docker-image "$img" 2>&1 || echo "KIND LOAD FAILED for $name"
+              kind load docker-image --name pfa-ci "$img" 2>&1 || echo "KIND LOAD FAILED for $name"
             done
           } > /tmp/kind_diag.log 2>&1 || true
           i=0
