@@ -143,11 +143,15 @@ jobs:
         if: failure()
         run: |
           {
-            echo "=== cypress docker logs ==="
+            echo "=== cypress docker logs (raw, tail 120) ==="
             cid=$(docker ps -aq --filter name=cypress 2>/dev/null | head -1) || true
-            if [ -n "$cid" ]; then docker logs --tail=300 "$cid" 2>&1 | tr -d '\r'; fi
-            echo "=== compose logs (tail 200) ==="
-            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=200 2>&1 | sed -e 's/\x1b\[[0-9;]*m//g' || true
+            if [ -n "$cid" ]; then docker logs "$cid" 2>&1 | sed -e 's/\x1b\[[0-9;]*[a-zA-Z]//g' | tail -120; fi
+            echo "=== auth-service exception cause (grep) ==="
+            docker logs pfa-devops-reservation-auth-service-1 2>&1 | grep -n -i -E 'Caused by|nested exception|Duplicate entry|BadSqlGrammar|ConstraintViolation|SQLSyntaxError|Unknown column|Unknown database|Table .* doesn' | tail -25 || true
+            echo "=== auth-service ERROR context ==="
+            docker logs pfa-devops-reservation-auth-service-1 2>&1 | grep -B 6 -A 2 -i -E 'ERROR|threw exception' | tail -60 || true
+            echo "=== compose logs (tail 60) ==="
+            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=60 2>&1 | sed -e 's/\x1b\[[0-9;]*m//g' || true
           } > /tmp/e2e_diag.log 2>&1 || true
           i=0
           split -b 38000 -d -a1 /tmp/e2e_diag.log /tmp/echunk_
