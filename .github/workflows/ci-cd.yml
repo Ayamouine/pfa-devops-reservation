@@ -139,7 +139,7 @@ jobs:
           docker compose -f docker-compose.yml -f docker-compose.cypress.yml up \
             --build --abort-on-container-exit --exit-code-from cypress
 
-      - name: Capture diagnostics on failure
+      - name: Collect logs on failure
         if: failure()
         run: |
           {
@@ -151,14 +151,12 @@ jobs:
             echo "=== auth-service logs (exception grep) ==="
             docker logs pfa-devops-reservation-auth-service-1 2>&1 | grep -E 'ERROR|Exception|Caused by' | tail -60 || true
           } > /tmp/e2e_diag.log 2>&1 || true
-
-      - name: Upload diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: e2e-diagnostics
-          path: /tmp/e2e_diag.log
-          if-no-files-found: ignore
+          i=0
+          split -b 38000 -d -a1 /tmp/e2e_diag.log /tmp/echunk_
+          for f in /tmp/echunk_*; do
+            echo "::error::[e2e]c$i $(base64 -w0 "$f" | tr -d '\n')"
+            i=$((i+1))
+          done
 
   deploy-kind:
     name: Deploy & health-check on Kubernetes (kind)
@@ -208,6 +206,19 @@ jobs:
           kubectl cluster-info
           docker image ls --no-trunc | grep -i ghcr || echo "(no ghcr images found locally)"
 
+      - name: Apply manifests and pin image tags
+        run: |
+          kubectl apply -f k8s/
+          for name in auth-service booking-service notification-service payment-service frontend; do
+            kubectl set image deployment/$name $name=${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
+          done
+
+      - name: Wait for rollouts
+        run: |
+          for name in mysql auth-service booking-service notification-service payment-service frontend; do
+            kubectl rollout status deployment/$name --timeout=420s
+          done
+
       - name: Capture kind diagnostics on failure
         if: failure()
         run: |
@@ -221,26 +232,11 @@ jobs:
               kubectl logs "deployment/$name" --tail=60 2>&1 | tail -60 || true
             done
           } > /tmp/kind_diag.log 2>&1 || true
-
-      - name: Upload kind diagnostics
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: kind-diagnostics
-          path: /tmp/kind_diag.log
-          if-no-files-found: ignore
-
-      - name: Apply manifests and pin image tags
-        run: |
-          kubectl apply -f k8s/
-          for name in auth-service booking-service notification-service payment-service frontend; do
-            kubectl set image deployment/$name $name=${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
-          done
-
-      - name: Wait for rollouts
-        run: |
-          for name in mysql auth-service booking-service notification-service payment-service frontend; do
-            kubectl rollout status deployment/$name --timeout=420s
+          i=0
+          split -b 38000 -d -a1 /tmp/kind_diag.log /tmp/kchunk_
+          for f in /tmp/kchunk_*; do
+            echo "::error::[kind]c$i $(base64 -w0 "$f" | tr -d '\n')"
+            i=$((i+1))
           done
 
       - name: Health-check the microservices
