@@ -144,9 +144,15 @@ jobs:
         run: |
           {
             docker ps -a
-            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=200
+            cid=$(docker ps -aq --filter name=cypress 2>/dev/null | head -1)
+            if [ -n "$cid" ]; then
+              echo "--- cypress container logs (tail 500) ---"
+              docker logs --tail=500 "$cid" 2>&1
+            fi
+            docker compose -f docker-compose.yml -f docker-compose.cypress.yml logs --tail=300
           } > /tmp/e2e_diag.log 2>&1 || true
-          while IFS= read -r line; do echo "::error::[e2e] $line"; done < /tmp/e2e_diag.log
+          head -n 700 /tmp/e2e_diag.log > /tmp/e2e_diag_trim.log
+          while IFS= read -r line; do echo "::error::[e2e] $line"; done < /tmp/e2e_diag_trim.log
 
   deploy-kind:
     name: Deploy & health-check on Kubernetes (kind)
@@ -194,10 +200,18 @@ jobs:
         run: |
           {
             kind version
-            docker image ls ${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}
             kubectl cluster-info
+            echo "--- docker image ls (any ghcr) ---"
+            docker image ls --no-trunc | grep -i ghcr || echo "(no ghcr images found locally)"
+            echo "--- re-run kind load per image (capture stderr) ---"
+            for name in auth-service booking-service notification-service payment-service frontend; do
+              img=${{ env.REGISTRY }}/${{ env.IMAGE_REPO }}/$name:${{ env.IMAGE_TAG }}
+              echo "### kind load $img"
+              kind load docker-image "$img" 2>&1 || echo "KIND LOAD FAILED for $name"
+            done
           } > /tmp/kind_diag.log 2>&1 || true
-          while IFS= read -r line; do echo "::error::[kind] $line"; done < /tmp/kind_diag.log
+          head -n 400 /tmp/kind_diag.log > /tmp/kind_diag_trim.log
+          while IFS= read -r line; do echo "::error::[kind] $line"; done < /tmp/kind_diag_trim.log
 
       - name: Apply manifests and pin image tags
         run: |
