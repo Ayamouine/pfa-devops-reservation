@@ -19,7 +19,7 @@ import com.example.bookingservice.model.Booking;
 import com.example.bookingservice.service.BookingService;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:3002"})
 @RequestMapping("/bookings")
 public class BookingController {
 

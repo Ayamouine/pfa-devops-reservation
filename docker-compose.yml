@@ -31,7 +31,7 @@ services:
     build: ./services/auth-service
     restart: on-failure:10
     ports:
-      - "8081:8081"
+      - "18081:8081"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8081/auth/health"]
       interval: 5s
@@ -75,7 +75,7 @@ services:
     build: ./services/notification-service
     restart: on-failure:10
     ports:
-      - "8083:8083"
+      - "18083:8083"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8083/notifications/health"]
       interval: 5s
@@ -124,9 +124,9 @@ services:
       retries: 60
       start_period: 180s
     environment:
-      - REACT_APP_AUTH_URL=http://localhost:8081
+      - REACT_APP_AUTH_URL=http://localhost:18081
       - REACT_APP_BOOKING_URL=http://localhost:8082
-      - REACT_APP_NOTIFICATION_URL=http://localhost:8083
+      - REACT_APP_NOTIFICATION_URL=http://localhost:18083
       - REACT_APP_PAYMENT_URL=http://localhost:8084
 
 volumes:

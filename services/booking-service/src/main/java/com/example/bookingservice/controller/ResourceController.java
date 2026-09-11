@@ -16,7 +16,7 @@ import com.example.bookingservice.model.ResourceDto;
 import com.example.bookingservice.service.ResourceService;
 
 @RestController
-@CrossOrigin(origins = "http://localhost:3001")
+@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3002"}) 
 @RequestMapping("/resources")
 public class ResourceController {
 

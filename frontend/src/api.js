@@ -31,7 +31,11 @@ export async function login(username, password) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   });
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || 'Identifiants invalides');
+  }
+  return data;
 }
 
 export async function register(payload) {
@@ -40,9 +44,12 @@ export async function register(payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
-  return res.json();
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || 'Inscription impossible.');
+  }
+  return data;
 }
-
 export async function refreshToken(refreshToken) {
   const res = await fetch(`${AUTH_URL}/auth/refresh`, {
     method: 'POST',
