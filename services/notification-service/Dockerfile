@@ -5,4 +5,4 @@ COPY . .
 # Requires Docker BuildKit (default in modern Docker). This caches ~/.m2 between builds.
 RUN --mount=type=cache,target=/root/.m2 mvn -q -DskipTests -DskipITs -Dmaven.test.skip=true package
 EXPOSE 8080
-CMD ["java", "-jar", "target/notification-service-0.0.1-SNAPSHOT.jar"]
+CMD ["bash", "-c", "until (echo > /dev/tcp/mysql/3306) 2>/dev/null; do echo 'En attente de mysql...'; sleep 2; done; echo 'mysql joignable, demarrage'; java -jar target/notification-service-0.0.1-SNAPSHOT.jar"]
