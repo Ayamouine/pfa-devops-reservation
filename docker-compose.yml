@@ -29,8 +29,9 @@ services:
 
   auth-service:
     build: ./services/auth-service
+    restart: on-failure:10
     ports:
-      - "8081:8081"
+      - "18081:8081"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8081/auth/health"]
       interval: 5s
@@ -50,6 +51,7 @@ services:
 
   booking-service:
     build: ./services/booking-service
+    restart: on-failure:10
     ports:
       - "8082:8082"
     healthcheck:
@@ -71,8 +73,9 @@ services:
 
   notification-service:
     build: ./services/notification-service
+    restart: on-failure:10
     ports:
-      - "8083:8083"
+      - "18083:8083"
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:8083/notifications/health"]
       interval: 5s
@@ -91,6 +94,7 @@ services:
 
   payment-service:
     build: ./services/payment-service
+    restart: on-failure:10
     ports:
       - "8084:8084"
     healthcheck:
@@ -120,10 +124,10 @@ services:
       retries: 60
       start_period: 180s
     environment:
-      - REACT_APP_AUTH_URL=http://auth-service:8081
-      - REACT_APP_BOOKING_URL=http://booking-service:8082
-      - REACT_APP_NOTIFICATION_URL=http://notification-service:8083
-      - REACT_APP_PAYMENT_URL=http://payment-service:8084
+      - REACT_APP_AUTH_URL=http://localhost:18081
+      - REACT_APP_BOOKING_URL=http://localhost:8082
+      - REACT_APP_NOTIFICATION_URL=http://localhost:18083
+      - REACT_APP_PAYMENT_URL=http://localhost:8084
 
 volumes:
   mysql_data:

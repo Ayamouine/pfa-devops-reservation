@@ -1,19 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BOOKING_URL, authHeaders, getResources as apiGetResources } from '../api';
+import { BOOKING_URL, authHeaders } from '../api';
 import { useAuth } from '../AuthContext';
 
 export default function ResourcesPage() {
-  const { token } = useAuth();
+  const { token, currentUser } = useAuth();
   const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiGetResources()
+    fetch(`${BOOKING_URL}/bookings/mine?username=${encodeURIComponent(currentUser.username)}`, { headers: authHeaders(token) })
+      .then((res) => res.json())
       .then(setAllBookings)
       .catch(() => setAllBookings([]))
       .finally(() => setLoading(false));
-  }, [token]);
+  }, [token, currentUser]);
 
   const resources = {};
   allBookings.forEach((b) => {

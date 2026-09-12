@@ -2,7 +2,6 @@ package com.example.bookingservice.controller;
 
 import java.util.List;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -13,11 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.bookingservice.entity.ResourceEntity;
+import com.example.bookingservice.model.ResourceDto;
 import com.example.bookingservice.service.ResourceService;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"})
+@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3002"}) 
 @RequestMapping("/resources")
 public class ResourceController {
 
@@ -28,28 +27,22 @@ public class ResourceController {
     }
 
     @GetMapping
-    public List<ResourceEntity> list() {
-        return resourceService.getAllActive();
-    }
-
-    @GetMapping("/{id}")
-    public ResourceEntity get(@PathVariable Long id) {
-        return resourceService.getById(id);
+    public List<ResourceDto> getAll() {
+        return resourceService.getAllResources();
     }
 
     @PostMapping
-    public ResponseEntity<ResourceEntity> create(@RequestBody ResourceEntity resource) {
-        return ResponseEntity.ok(resourceService.create(resource));
+    public ResourceDto create(@RequestBody ResourceDto dto) {
+        return resourceService.createResource(dto);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ResourceEntity> update(@PathVariable Long id, @RequestBody ResourceEntity resource) {
-        return ResponseEntity.ok(resourceService.update(id, resource));
+    public ResourceDto update(@PathVariable Long id, @RequestBody ResourceDto dto) {
+        return resourceService.updateResource(id, dto);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
-        resourceService.delete(id);
-        return ResponseEntity.noContent().build();
+    public void delete(@PathVariable Long id) {
+        resourceService.deleteResource(id);
     }
 }

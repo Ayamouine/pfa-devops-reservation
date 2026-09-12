@@ -2,11 +2,12 @@ package com.example.bookingservice.service;
 
 import java.util.List;
 
-import static org.springframework.http.HttpStatus.NOT_FOUND;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import com.example.bookingservice.entity.ResourceEntity;
+import com.example.bookingservice.model.ResourceDto;
 import com.example.bookingservice.repository.ResourceRepository;
 
 @Service
@@ -18,32 +19,49 @@ public class ResourceService {
         this.resourceRepository = resourceRepository;
     }
 
-    public List<ResourceEntity> getAllActive() {
-        return resourceRepository.findByActiveTrue();
+    public List<ResourceDto> getAllResources() {
+        return resourceRepository.findAll().stream().map(this::toDto).toList();
     }
 
-    public ResourceEntity getById(Long id) {
-        return resourceRepository.findById(id).orElseThrow(() -> new ResponseStatusException(NOT_FOUND, "Resource not found"));
+    public ResourceDto createResource(ResourceDto dto) {
+        ResourceEntity entity = new ResourceEntity();
+        applyDto(entity, dto);
+        return toDto(resourceRepository.save(entity));
     }
 
-    public ResourceEntity create(ResourceEntity resource) {
-        resource.setId(null);
-        return resourceRepository.save(resource);
+    public ResourceDto updateResource(Long id, ResourceDto dto) {
+        ResourceEntity entity = resourceRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Ressource introuvable"));
+        applyDto(entity, dto);
+        return toDto(resourceRepository.save(entity));
     }
 
-    public ResourceEntity update(Long id, ResourceEntity updated) {
-        ResourceEntity existing = getById(id);
-        existing.setName(updated.getName());
-        existing.setCapacity(updated.getCapacity());
-        existing.setLocation(updated.getLocation());
-        existing.setEquipment(updated.getEquipment());
-        existing.setPrice(updated.getPrice());
-        existing.setActive(updated.getActive() == null ? true : updated.getActive());
-        return resourceRepository.save(existing);
+    public void deleteResource(Long id) {
+        if (!resourceRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Ressource introuvable");
+        }
+        resourceRepository.deleteById(id);
     }
 
-    public void delete(Long id) {
-        ResourceEntity existing = getById(id);
-        resourceRepository.delete(existing);
+    private void applyDto(ResourceEntity entity, ResourceDto dto) {
+        entity.setName(dto.getName());
+        entity.setCategory(dto.getCategory());
+        entity.setCapacity(dto.getCapacity());
+        entity.setLocation(dto.getLocation());
+        entity.setEquipment(dto.getEquipment());
+        entity.setPrice(dto.getPrice());
+        entity.setActive(true);
+    }
+
+    private ResourceDto toDto(ResourceEntity entity) {
+        ResourceDto dto = new ResourceDto();
+        dto.setId(entity.getId());
+        dto.setName(entity.getName());
+        dto.setCategory(entity.getCategory());
+        dto.setCapacity(entity.getCapacity());
+        dto.setLocation(entity.getLocation());
+        dto.setEquipment(entity.getEquipment());
+        dto.setPrice(entity.getPrice());
+        return dto;
     }
 }
