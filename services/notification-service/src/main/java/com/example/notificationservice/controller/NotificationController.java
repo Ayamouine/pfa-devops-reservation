@@ -16,8 +16,7 @@ import com.example.notificationservice.model.NotificationRequest;
 import com.example.notificationservice.service.NotificationService;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:3002"})
-@RequestMapping("/notifications")
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:3002"})@RequestMapping("/notifications")
 public class NotificationController {
 
     private final NotificationService notificationService;

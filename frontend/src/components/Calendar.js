@@ -5,6 +5,7 @@ import { useAuth } from '../AuthContext';
 export default function Calendar({ resource, onBook }) {
   const [days, setDays] = useState([]);
   const [loadingMap, setLoadingMap] = useState({});
+  const { token } = useAuth();
 
   useEffect(() => {
     const list = [];
@@ -20,7 +21,7 @@ export default function Calendar({ resource, onBook }) {
   const check = async (day) => {
     try {
       setLoadingMap((m) => ({ ...m, [day]: true }));
-      const res = await checkAvailability(resource, day);
+      const res = await checkAvailability(resource, day, token);
       return res.available;
     } finally {
       setLoadingMap((m) => ({ ...m, [day]: false }));

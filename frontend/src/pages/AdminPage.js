@@ -1,28 +1,63 @@
 import React, { useEffect, useState } from 'react';
-import { BOOKING_URL, statusClass, statusLabel, getResources, createResource, updateResource, deleteResource } from '../api';
 import { useAuth } from '../AuthContext';
-import { authHeaders } from '../api';
+import { BOOKING_URL, PAYMENT_URL, authHeaders, statusClass, statusLabel } from '../api';
+import {
+  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid,
+} from 'recharts';
+
+const STATUS_COLORS = { confirmed: '#2f6f52', pending: '#8a6a20', cancelled: '#a6394a' };
 
 export default function AdminPage() {
+  const { token } = useAuth();
   const [allBookings, setAllBookings] = useState([]);
+  const [allPayments, setAllPayments] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
 
-const { token } = useAuth();
-
-useEffect(() => {
-  fetch(`${BOOKING_URL}/bookings`, { headers: authHeaders(token) })
-    .then((res) => res.json())
-    .then(setAllBookings)
-    .catch(() => setAllBookings([]))
-    .finally(() => setLoading(false));
-}, [token]);
+  useEffect(() => {
+    Promise.all([
+      fetch(`${BOOKING_URL}/bookings`, { headers: authHeaders(token) }).then((res) => res.json()),
+      fetch(`${PAYMENT_URL}/payments`, { headers: authHeaders(token) }).then((res) => res.json()),
+    ])
+      .then(([bookings, payments]) => {
+        setAllBookings(bookings);
+        setAllPayments(payments);
+      })
+      .catch(() => {
+        setAllBookings([]);
+        setAllPayments([]);
+      })
+      .finally(() => setLoading(false));
+  }, [token]);
 
   const stats = {
     total: allBookings.length,
     confirmed: allBookings.filter((b) => (b.status || '').toLowerCase() === 'confirmed').length,
     pending: allBookings.filter((b) => (b.status || '').toLowerCase() === 'pending').length,
+    cancelled: allBookings.filter((b) => (b.status || '').toLowerCase() === 'cancelled').length,
   };
+  const confirmationRate = stats.total > 0 ? Math.round((stats.confirmed / stats.total) * 100) : 0;
+  const activeUsers = new Set(allBookings.map((b) => b.username)).size;
+  const totalRevenue = allPayments
+    .filter((p) => (p.status || '').toLowerCase() === 'completed' || (p.status || '').toLowerCase() === 'paid')
+    .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+  const statusPieData = [
+    { name: 'Confirmées', value: stats.confirmed, key: 'confirmed' },
+    { name: 'En attente', value: stats.pending, key: 'pending' },
+    { name: 'Annulées', value: stats.cancelled, key: 'cancelled' },
+  ].filter((d) => d.value > 0);
+
+  const countByResource = {};
+  allBookings.forEach((b) => {
+    if (!b.resource) return;
+    countByResource[b.resource] = (countByResource[b.resource] || 0) + 1;
+  });
+  const topResourcesData = Object.entries(countByResource)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 6)
+    .map(([resource, count]) => ({ resource, count }));
 
   const filtered = searchTerm.trim()
     ? allBookings.filter((b) => `${b.resource} ${b.username}`.toLowerCase().includes(searchTerm.trim().toLowerCase()))
@@ -32,25 +67,93 @@ useEffect(() => {
     <div className="page">
       <header className="page-header">
         <h1>Administration</h1>
-        <p>Toutes les réservations de la plateforme.</p>
+        <p>Vue d'ensemble et toutes les réservations de la plateforme.</p>
       </header>
 
-      <div className="stats-grid">
-        <div className="stat-card">
+      <div className="stats-grid stats-grid-wide">
+        <div className="stat-card stat-card-glow">
           <span className="stat-value">{stats.total}</span>
-          <span className="stat-label">Total</span>
+          <span className="stat-label">Réservations totales</span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-glow">
           <span className="stat-value">{stats.confirmed}</span>
           <span className="stat-label">Confirmées</span>
         </div>
-        <div className="stat-card">
+        <div className="stat-card stat-card-glow">
           <span className="stat-value">{stats.pending}</span>
           <span className="stat-label">En attente</span>
         </div>
+        <div className="stat-card stat-card-glow">
+          <span className="stat-value">{stats.cancelled}</span>
+          <span className="stat-label">Annulées</span>
+        </div>
+        <div className="stat-card stat-card-glow">
+          <span className="stat-value">{confirmationRate}%</span>
+          <span className="stat-label">Taux de confirmation</span>
+        </div>
+        <div className="stat-card stat-card-glow">
+          <span className="stat-value">{activeUsers}</span>
+          <span className="stat-label">Utilisateurs actifs</span>
+        </div>
+        <div className="stat-card stat-card-glow">
+          <span className="stat-value">{totalRevenue.toFixed(0)} MAD</span>
+          <span className="stat-label">Revenu total</span>
+        </div>
+      </div>
+
+      <div className="grid-two">
+        <section className="card">
+          <h2>Répartition des statuts</h2>
+          {statusPieData.length === 0 ? (
+            <p className="empty-state">Aucune donnée pour le moment.</p>
+          ) : (
+            <div style={{ width: '100%', height: 260 }}>
+              <ResponsiveContainer>
+                <PieChart>
+                  <Pie
+                    data={statusPieData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={90}
+                    paddingAngle={3}
+                  >
+                    {statusPieData.map((entry) => (
+                      <Cell key={entry.key} fill={STATUS_COLORS[entry.key]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend verticalAlign="bottom" height={30} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </section>
+
+        <section className="card">
+          <h2>Ressources les plus demandées</h2>
+          {topResourcesData.length === 0 ? (
+            <p className="empty-state">Aucune donnée pour le moment.</p>
+          ) : (
+            <div style={{ width: '100%', height: 260 }}>
+              <ResponsiveContainer>
+                <BarChart data={topResourcesData} margin={{ top: 8, right: 8, left: -20, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#dde3de" />
+                  <XAxis dataKey="resource" tick={{ fontSize: 11 }} interval={0} angle={-15} textAnchor="end" height={50} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="count" fill="#c78a3e" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </section>
       </div>
 
       <section className="card">
+        <h2>Toutes les réservations</h2>
         <input
           type="text"
           className="search-input"
@@ -78,74 +181,6 @@ useEffect(() => {
           </div>
         )}
       </section>
-
-      <section className="card" style={{ marginTop: 20 }}>
-        <h2>Gérer les ressources</h2>
-        <ResourceManager token={token} />
-      </section>
-    </div>
-  );
-}
-
-function ResourceManager({ token }) {
-  const [list, setList] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [form, setForm] = React.useState({ name: '', capacity: 10, location: '', price: 0 });
-  const [editing, setEditing] = React.useState(null);
-
-  const load = () => {
-    setLoading(true);
-    getResources().then((r) => { setList(r || []); setLoading(false); }).catch(() => { setList([]); setLoading(false); });
-  };
-
-  React.useEffect(() => { load(); }, []);
-
-  const save = async () => {
-    if (!form.name) return alert('Le nom est requis');
-    try {
-      if (editing) {
-        await updateResource(token, editing.id || editing.name, form);
-      } else {
-        await createResource(token, form);
-      }
-      setForm({ name: '', capacity: 10, location: '', price: 0 });
-      setEditing(null);
-      load();
-    } catch (err) { alert(err.message || 'Erreur'); }
-  };
-
-  const remove = async (r) => {
-    if (!confirm(`Supprimer ${r.name} ?`)) return;
-    try { await deleteResource(token, r.id || r.name); load(); } catch (e) { alert('Impossible de supprimer'); }
-  };
-
-  return (
-    <div>
-      <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-        <input placeholder="Nom" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-        <input type="number" placeholder="Capacité" value={form.capacity} onChange={(e) => setForm({ ...form, capacity: Number(e.target.value) })} />
-        <input placeholder="Emplacement" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-        <input type="number" placeholder="Prix" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
-        <button className="btn btn-primary" onClick={save}>{editing ? 'Mettre à jour' : 'Créer'}</button>
-      </div>
-
-      {loading && <p className="empty-state">Chargement…</p>}
-      {!loading && list.length === 0 && <p className="empty-state">Aucune ressource définie.</p>}
-      {!loading && list.length > 0 && (
-        <div className="simple-list">
-          {list.map((r) => (
-            <div key={r.id || r.name} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-              <div>
-                <strong>{r.name}</strong> · {r.location} · cap {r.capacity} · {r.price}€
-              </div>
-              <div>
-                <button className="btn btn-ghost" onClick={() => { setEditing(r); setForm({ name: r.name, capacity: r.capacity || 10, location: r.location || '', price: r.price || 0 }); }}>Éditer</button>
-                <button className="btn btn-danger-outline" onClick={() => remove(r)}>Supprimer</button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

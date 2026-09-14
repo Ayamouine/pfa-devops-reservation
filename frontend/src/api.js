@@ -115,12 +115,16 @@ export async function deleteResource(token, id) {
 }
 
 // Availability and bookings
-export async function checkAvailability(resource, date) {
+export async function checkAvailability(resource, date, token) {
   const url = new URL(`${BOOKING_URL}/bookings/availability`);
   url.searchParams.set('resource', resource);
   url.searchParams.set('date', date);
-  const res = await fetch(url.toString());
-  return res.json();
+  const res = await fetch(url.toString(), { headers: authHeaders(token) });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.message || 'Impossible de vérifier la disponibilité.');
+  }
+  return data;
 }
 
 export async function createBooking(token, booking) {

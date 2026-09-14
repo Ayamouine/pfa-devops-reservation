@@ -68,4 +68,20 @@ public class AuthController {
         authService.verifyAccount(token);
         return ResponseEntity.noContent().build();
     }
+    @GetMapping("/users")
+public java.util.List<com.example.authservice.model.UserDto> listUsers() {
+    return authService.getAllUsers();
+}
+
+@org.springframework.web.bind.annotation.PutMapping("/users/{id}/role")
+public com.example.authservice.model.UserDto updateRole(
+        @org.springframework.web.bind.annotation.PathVariable Long id,
+        @RequestBody com.example.authservice.model.RoleUpdateRequest body) {
+    return authService.updateUserRole(id, body.getRole());
+}
+
+@org.springframework.web.bind.annotation.DeleteMapping("/users/{id}")
+public void deleteUser(@org.springframework.web.bind.annotation.PathVariable Long id) {
+    authService.deleteUser(id);
+}
 }

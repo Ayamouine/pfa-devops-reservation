@@ -15,6 +15,7 @@ import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
 import ResourceDetail from './pages/ResourceDetail';
 import CalendarPage from './pages/CalendarPage';
+import AdminUsersPage from './pages/AdminUsersPage';
 
 function Layout({ children }) {
   return (
@@ -59,6 +60,7 @@ function AppRoutes() {
       <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
       <Route path="/profil" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
       <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+      <Route path="/admin/utilisateurs" element={<AdminRoute><AdminUsersPage /></AdminRoute>} />
       <Route path="/ressources/:id" element={<PrivateRoute><ResourceDetail /></PrivateRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

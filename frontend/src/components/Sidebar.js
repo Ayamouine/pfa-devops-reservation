@@ -25,11 +25,20 @@ export default function Sidebar() {
         <NavLink to="/profil" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
           Mon profil
         </NavLink>
-        {isAdmin && (
-          <NavLink to="/admin" className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
-            Administration
-          </NavLink>
-        )}
+       {isAdmin && (
+  <>
+    <div className="admin-mode-banner">Mode Administrateur</div>
+    <NavLink to="/admin" className={({ isActive }) => `sidebar-link admin-link ${isActive ? 'active' : ''}`}>
+      Administration
+    </NavLink>
+    <NavLink to="/admin/ressources" className={({ isActive }) => `sidebar-link admin-link ${isActive ? 'active' : ''}`}>
+      Gestion des ressources
+    </NavLink>
+    <NavLink to="/admin/utilisateurs" className={({ isActive }) => `sidebar-link admin-link ${isActive ? 'active' : ''}`}>
+      Gestion des utilisateurs
+    </NavLink>
+  </>
+)}
       </nav>
 
       <div className="sidebar-footer">

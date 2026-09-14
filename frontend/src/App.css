@@ -382,3 +382,56 @@ input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: 1p
 .modal-box { background: var(--card); border-radius: 12px; padding: 1.5rem; max-width: 360px; width: 100%; box-shadow: 0 20px 60px -20px rgba(16, 49, 47, 0.5); }
 .modal-box p { margin: 0 0 1.25rem; color: var(--text); font-size: 0.95rem; }
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.6rem; }
+/* --- Dashboard polish: hover lift + subtle glow --- */
+.stat-card-glow {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: default;
+}
+.stat-card-glow:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px -10px rgba(199, 138, 62, 0.35);
+  border-color: var(--accent-light);
+}
+
+.ticket {
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ticket:hover {
+  transform: translateX(2px);
+  box-shadow: 0 6px 18px -10px rgba(16, 49, 47, 0.25);
+}
+
+.card {
+  transition: box-shadow 0.15s ease;
+}
+.card:hover {
+  box-shadow: 0 2px 4px rgba(16, 49, 47, 0.08), 0 12px 32px -14px rgba(16, 49, 47, 0.16);
+}
+/* --- Admin visual distinction --- */
+.admin-mode-banner {
+  background: rgba(199, 138, 62, 0.25);
+  color: var(--accent-light);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 0.4rem 0.7rem;
+  border-radius: 6px;
+  margin: 0.5rem 0 0.75rem;
+  text-align: center;
+  border: 1px solid rgba(199, 138, 62, 0.4);
+}
+
+.sidebar-link.admin-link {
+  border-left: 3px solid transparent;
+  padding-left: calc(0.85rem - 3px);
+}
+.sidebar-link.admin-link:hover,
+.sidebar-link.admin-link.active {
+  border-left-color: var(--accent);
+}
+
+/* Admin gets a warmer accent border on the whole sidebar */
+.app-shell:has(.admin-mode-banner) .sidebar {
+  box-shadow: inset 4px 0 0 var(--accent);
+}

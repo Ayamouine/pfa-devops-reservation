@@ -162,4 +162,30 @@ public class AuthService {
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                 .compact();
     }
+    public java.util.List<com.example.authservice.model.UserDto> getAllUsers() {
+    return userRepository.findAll().stream()
+            .map(u -> new com.example.authservice.model.UserDto(u.getId(), u.getUsername(), u.getRole()))
+            .toList();
+}
+
+public com.example.authservice.model.UserDto updateUserRole(Long id, String newRole) {
+    com.example.authservice.entity.AppUser user = userRepository.findById(id)
+            .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
+                    org.springframework.http.HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
+    if (!"ADMIN".equalsIgnoreCase(newRole) && !"USER".equalsIgnoreCase(newRole)) {
+        throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.BAD_REQUEST, "Rôle invalide");
+    }
+    user.setRole(newRole.toUpperCase());
+    com.example.authservice.entity.AppUser saved = userRepository.save(user);
+    return new com.example.authservice.model.UserDto(saved.getId(), saved.getUsername(), saved.getRole());
+}
+
+public void deleteUser(Long id) {
+    if (!userRepository.existsById(id)) {
+        throw new org.springframework.web.server.ResponseStatusException(
+                org.springframework.http.HttpStatus.NOT_FOUND, "Utilisateur introuvable");
+    }
+    userRepository.deleteById(id);
+}
 }
