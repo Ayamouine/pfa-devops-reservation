@@ -48,10 +48,14 @@ export default function LoginPage() {
         </form>
 
         {error && <p className="message error">{error}</p>}
+        <p className="auth-forgot" style={{ textAlign: 'center', marginTop: '0.5rem' }}>
+          <Link to="/forgot">Mot de passe oublié ?</Link>
+        </p>
 
         <p className="auth-switch">
           Pas encore de compte ? <Link to="/register">Créer un compte</Link>
         </p>
+        
       </div>
     </div>
   );

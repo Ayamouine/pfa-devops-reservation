@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.authservice.entity.AppUser;
 import com.example.authservice.entity.PasswordResetToken;
@@ -51,6 +52,7 @@ public class AuthService {
         this.adminRegistrationCode = adminRegistrationCode;
     }
 
+    @Transactional
     public AuthResponse register(RegisterRequest request) {
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
@@ -74,6 +76,7 @@ public class AuthService {
         return new AuthResponse(generateToken(savedUser), refresh, savedUser.getUsername(), savedUser.getRole());
     }
 
+    @Transactional
     public AuthResponse login(AuthRequest request) {
         AppUser user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
@@ -95,6 +98,7 @@ public class AuthService {
         return token;
     }
 
+    @Transactional
     public AuthResponse refresh(String refreshToken) {
         RefreshToken rt = refreshTokenRepository.findByToken(refreshToken)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
@@ -116,15 +120,15 @@ public class AuthService {
         return token;
     }
 
+    @Transactional
     public void verifyAccount(String token) {
         VerificationToken vt = verificationTokenRepository.findByToken(token)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid verification token"));
         if (vt.getExpiryDate().isBefore(java.time.Instant.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Verification token expired");
         }
-        AppUser user = userRepository.findByUsername(vt.getUsername())
+        userRepository.findByUsername(vt.getUsername())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-        // nothing to change for now (could set a verified flag)
         verificationTokenRepository.delete(vt);
     }
 
@@ -139,6 +143,7 @@ public class AuthService {
         return token;
     }
 
+    @Transactional
     public void resetPassword(String token, String newPassword) {
         PasswordResetToken prt = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid reset token"));
@@ -151,7 +156,6 @@ public class AuthService {
         userRepository.save(user);
         passwordResetTokenRepository.delete(prt);
     }
-    
 
     private String generateToken(AppUser user) {
         return Jwts.builder()
@@ -162,30 +166,59 @@ public class AuthService {
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                 .compact();
     }
+
     public java.util.List<com.example.authservice.model.UserDto> getAllUsers() {
-    return userRepository.findAll().stream()
-            .map(u -> new com.example.authservice.model.UserDto(u.getId(), u.getUsername(), u.getRole()))
-            .toList();
-}
-
-public com.example.authservice.model.UserDto updateUserRole(Long id, String newRole) {
-    com.example.authservice.entity.AppUser user = userRepository.findById(id)
-            .orElseThrow(() -> new org.springframework.web.server.ResponseStatusException(
-                    org.springframework.http.HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
-    if (!"ADMIN".equalsIgnoreCase(newRole) && !"USER".equalsIgnoreCase(newRole)) {
-        throw new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.BAD_REQUEST, "Rôle invalide");
+        return userRepository.findAll().stream()
+                .map(u -> new com.example.authservice.model.UserDto(u.getId(), u.getUsername(), u.getRole()))
+                .toList();
     }
-    user.setRole(newRole.toUpperCase());
-    com.example.authservice.entity.AppUser saved = userRepository.save(user);
-    return new com.example.authservice.model.UserDto(saved.getId(), saved.getUsername(), saved.getRole());
-}
 
-public void deleteUser(Long id) {
-    if (!userRepository.existsById(id)) {
-        throw new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.NOT_FOUND, "Utilisateur introuvable");
+    @Transactional
+    public com.example.authservice.model.UserDto updateUserRole(Long id, String newRole) {
+        AppUser user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
+        if (!"ADMIN".equalsIgnoreCase(newRole) && !"USER".equalsIgnoreCase(newRole)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role invalide");
+        }
+        user.setRole(newRole.toUpperCase());
+        AppUser saved = userRepository.save(user);
+        return new com.example.authservice.model.UserDto(saved.getId(), saved.getUsername(), saved.getRole());
     }
-    userRepository.deleteById(id);
-}
+
+    @Transactional
+    public void deleteUser(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable");
+        }
+        userRepository.deleteById(id);
+    }
+        @Transactional
+    public AuthResponse updateProfile(String currentUsername, com.example.authservice.model.UpdateProfileRequest request) {
+        AppUser user = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
+
+        if (request.getCurrentPassword() == null || !passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Mot de passe actuel incorrect");
+        }
+
+        if (request.getNewUsername() != null && !request.getNewUsername().isBlank()
+                && !request.getNewUsername().equals(user.getUsername())) {
+            if (userRepository.existsByUsername(request.getNewUsername())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce nom d'utilisateur est déjà pris");
+            }
+            user.setUsername(request.getNewUsername());
+        }
+
+        if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {
+            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        }
+
+        if (request.getAvatarColor() != null && !request.getAvatarColor().isBlank()) {
+            user.setAvatarColor(request.getAvatarColor());
+        }
+
+        AppUser saved = userRepository.save(user);
+        String refresh = createRefreshToken(saved.getUsername());
+        return new AuthResponse(generateToken(saved), refresh, saved.getUsername(), saved.getRole());
+    }
 }

@@ -84,4 +84,10 @@ public com.example.authservice.model.UserDto updateRole(
 public void deleteUser(@org.springframework.web.bind.annotation.PathVariable Long id) {
     authService.deleteUser(id);
 }
+    @org.springframework.web.bind.annotation.PutMapping("/profile")
+    public ResponseEntity<AuthResponse> updateProfile(
+            @org.springframework.web.bind.annotation.RequestParam String username,
+            @RequestBody com.example.authservice.model.UpdateProfileRequest request) {
+        return ResponseEntity.ok(authService.updateProfile(username, request));
+    }
 }

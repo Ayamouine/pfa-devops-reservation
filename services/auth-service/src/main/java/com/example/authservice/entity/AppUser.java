@@ -23,7 +23,8 @@ public class AppUser {
 
     @Column(nullable = false)
     private String role;
-
+    @jakarta.persistence.Column(name = "avatar_color")
+    private String avatarColor = "#c78a3e";
     public AppUser() {
     }
 
@@ -60,4 +61,7 @@ public class AppUser {
     public void setRole(String role) {
         this.role = role;
     }
+    public String getAvatarColor() { return avatarColor; }
+    
+    public void setAvatarColor(String avatarColor) { this.avatarColor = avatarColor; }
 }
