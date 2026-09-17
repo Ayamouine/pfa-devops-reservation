@@ -277,4 +277,67 @@ class AuthServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Code doyen invalide");
     }
+
+    @Test
+    void createUser_createsAccount_withoutRegistrationCode() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("nouveau.prof");
+        request.setPassword("secret123");
+        request.setRole("PROF");
+        request.setFirstName("Salma");
+        request.setLastName("El Idrissi");
+        request.setFiliere("Informatique");
+
+        when(userRepository.existsByUsername("nouveau.prof")).thenReturn(false);
+        when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        var dto = authService.createUser(request);
+
+        assertThat(dto.getUsername()).isEqualTo("nouveau.prof");
+        assertThat(dto.getRole()).isEqualTo("PROF");
+        assertThat(dto.getFirstName()).isEqualTo("Salma");
+        assertThat(dto.getFiliere()).isEqualTo("Informatique");
+    }
+
+    @Test
+    void createUser_throwsConflict_whenUsernameAlreadyExists() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("aya");
+        request.setPassword("secret123");
+
+        when(userRepository.existsByUsername("aya")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.createUser(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("existe déjà");
+    }
+
+    @Test
+    void createUser_throwsBadRequest_whenChefWithoutFiliere() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("chef2");
+        request.setPassword("secret123");
+        request.setRole("CHEF_FILIERE");
+
+        when(userRepository.existsByUsername("chef2")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.createUser(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("La filière est requise");
+    }
+
+    @Test
+    void createUser_throwsBadRequest_whenInvalidRole() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("weird");
+        request.setPassword("secret123");
+        request.setRole("SUPERUSER");
+
+        when(userRepository.existsByUsername("weird")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.createUser(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Role invalide");
+    }
 }

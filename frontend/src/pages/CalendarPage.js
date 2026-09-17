@@ -6,7 +6,8 @@ import { useAuth } from '../AuthContext';
 export default function CalendarPage() {
   const [resources, setResources] = useState([]);
   const [selected, setSelected] = useState(null);
-  const { currentUser, token } = useAuth();
+  const { currentUser, token, role } = useAuth();
+  const canBook = role !== 'ETUDIANT';
 
   useEffect(() => {
     (async () => {
@@ -36,7 +37,12 @@ export default function CalendarPage() {
           ))}
         </select>
       </div>
-      {selected ? <Calendar resource={selected} onBook={handleBook} /> : <p>Aucune ressource</p>}
+      {selected ? <Calendar resource={selected} onBook={canBook ? handleBook : undefined} /> : <p>Aucune ressource</p>}
+      {!canBook && (
+        <p className="small-muted">
+          Consultation seule : les demandes de réservation sont réservées au corps enseignant.
+        </p>
+      )}
     </div>
   );
 }

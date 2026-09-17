@@ -73,6 +73,12 @@ public java.util.List<com.example.authservice.model.UserDto> listUsers() {
     return authService.getAllUsers();
 }
 
+@PostMapping("/users")
+public com.example.authservice.model.UserDto createUser(
+        @RequestBody com.example.authservice.model.RegisterRequest body) {
+    return authService.createUser(body);
+}
+
 @org.springframework.web.bind.annotation.PutMapping("/users/{id}/role")
 public com.example.authservice.model.UserDto updateRole(
         @org.springframework.web.bind.annotation.PathVariable Long id,

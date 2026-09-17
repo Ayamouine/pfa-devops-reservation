@@ -92,7 +92,7 @@ cd frontend && npm ci && npm start
 - `POST /auth/refresh` — body: `{ refreshToken }`
 - `POST /auth/forgot` / `POST /auth/reset` / `GET /auth/verify?token=`
 - `PUT /auth/profile?username=` — mise à jour du profil (mot de passe actuel requis)
-- `GET /auth/users`, `PUT /auth/users/{id}/role`, `PUT /auth/users/{id}/filiere` (admin)
+- `GET /auth/users`, `POST /auth/users` (création de compte), `PUT /auth/users/{id}/role`, `PUT /auth/users/{id}/filiere`, `DELETE /auth/users/{id}` (admin)
 
 **Booking** (`booking-service`)
 

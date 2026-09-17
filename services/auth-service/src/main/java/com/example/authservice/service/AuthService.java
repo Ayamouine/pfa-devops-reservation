@@ -229,6 +229,32 @@ public class AuthService {
     }
 
     @Transactional
+    public UserDto createUser(RegisterRequest request) {
+        if (request.getUsername() == null || request.getUsername().isBlank()
+                || request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nom d'utilisateur et mot de passe requis");
+        }
+        if (userRepository.existsByUsername(request.getUsername())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce nom d'utilisateur existe déjà");
+        }
+        String role = request.getRole() == null || request.getRole().isBlank()
+                ? "USER" : request.getRole().toUpperCase();
+        if (!VALID_ROLES.contains(role)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role invalide");
+        }
+        if ("CHEF_FILIERE".equals(role)
+                && (request.getFiliere() == null || request.getFiliere().isBlank())) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "La filière est requise pour le rôle Chef de filière");
+        }
+        AppUser user = new AppUser(request.getUsername(), passwordEncoder.encode(request.getPassword()), role);
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setFiliere(request.getFiliere());
+        return toUserDto(userRepository.save(user));
+    }
+
+    @Transactional
     public UserDto updateUserRole(Long id, String newRole) {
         AppUser user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));

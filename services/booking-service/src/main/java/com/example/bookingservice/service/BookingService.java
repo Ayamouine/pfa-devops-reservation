@@ -126,12 +126,17 @@ public class BookingService {
     }
 
     @Transactional
-    public Booking approveBooking(Long id, String comment, String actor, String actorFiliere) {
+    public Booking approveBooking(Long id, String comment, String actor, String actorRole, String actorFiliere) {
+        boolean isChef = "CHEF_FILIERE".equalsIgnoreCase(actorRole);
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(actorRole);
+        if (!isChef && !isAdmin) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Action réservée au chef de filière");
+        }
         BookingEntity entity = require(id);
         if (!STATUS_PENDING.equalsIgnoreCase(entity.getStatus())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cette demande n'est plus en attente");
         }
-        if (entity.getFiliere() != null && !entity.getFiliere().isBlank()
+        if (isChef && entity.getFiliere() != null && !entity.getFiliere().isBlank()
                 && actorFiliere != null && !actorFiliere.equalsIgnoreCase(entity.getFiliere())) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Cette demande n'appartient pas à votre filière");
         }

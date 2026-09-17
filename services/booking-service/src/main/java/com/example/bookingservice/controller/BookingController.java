@@ -88,8 +88,9 @@ public class BookingController {
                                                   @RequestParam(required = false) String comment,
                                                   HttpServletRequest request) {
         String actor = attribute(request, "jwtUsername", request.getParameter("actor"));
+        String actorRole = attribute(request, "jwtRole", request.getParameter("role"));
         String actorFiliere = attribute(request, "jwtFiliere", request.getParameter("filiere"));
-        return ResponseEntity.ok(bookingService.approveBooking(id, comment, actor, actorFiliere));
+        return ResponseEntity.ok(bookingService.approveBooking(id, comment, actor, actorRole, actorFiliere));
     }
 
     @PostMapping("/{id}/reject")

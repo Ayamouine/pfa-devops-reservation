@@ -90,12 +90,22 @@ class BookingServiceTest {
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(entity));
         when(bookingRepository.save(any(BookingEntity.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Booking result = bookingService.approveBooking(1L, "OK, cours validé", "chefGI", "GI");
+        Booking result = bookingService.approveBooking(1L, "OK, cours validé", "chefGI", "CHEF_FILIERE", "GI");
 
         assertThat(result.getStatus()).isEqualTo("APPROVED");
         assertThat(result.getChefComment()).isEqualTo("OK, cours validé");
         verify(notificationClient).sendWorkflowNotification(eq("aya"), any(), any(), eq("BOOKING_APPROVED"), any());
         verify(notificationClient).sendWorkflowNotification(eq(null), eq("ROLE:DOYEN"), any(), any(), any());
+    }
+
+    @Test
+    void approveBooking_forbidsNonChefRole() {
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(
+                new BookingEntity("Salle A", LocalDate.parse("2026-08-01"), "PENDING", "aya")));
+
+        assertThatThrownBy(() -> bookingService.approveBooking(1L, "OK", "prof1", "PROF", "GI"))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("réservée au chef de filière");
     }
 
     @Test
@@ -105,7 +115,7 @@ class BookingServiceTest {
         entity.setFiliere("GI");
         when(bookingRepository.findById(1L)).thenReturn(Optional.of(entity));
 
-        assertThatThrownBy(() -> bookingService.approveBooking(1L, "OK", "chefCM", "CM"))
+        assertThatThrownBy(() -> bookingService.approveBooking(1L, "OK", "chefCM", "CHEF_FILIERE", "CM"))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("pas à votre filière");
     }

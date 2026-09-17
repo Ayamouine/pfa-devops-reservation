@@ -51,22 +51,23 @@ export default function Sidebar() {
         </NavLink>
 
         {(role === 'PROF' || role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN') && (
-          <>
-            <NavLink to="/reservations" className={linkCls}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <rect x="3" y="4" width="18" height="18" rx="2" />
-                <path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-              Mes demandes
-            </NavLink>
-            <NavLink to="/validations" className={linkCls}>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                <path d="M9 11l3 3 8-8" />
-                <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11" />
-              </svg>
-              Validations
-            </NavLink>
-          </>
+          <NavLink to="/reservations" className={linkCls}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <rect x="3" y="4" width="18" height="18" rx="2" />
+              <path d="M16 2v4M8 2v4M3 10h18" />
+            </svg>
+            Mes demandes
+          </NavLink>
+        )}
+
+        {(role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN') && (
+          <NavLink to="/validations" className={linkCls}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M9 11l3 3 8-8" />
+              <path d="M21 12v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h11" />
+            </svg>
+            {role === 'DOYEN' ? 'Cachet du doyen' : 'Validations'}
+          </NavLink>
         )}
 
         <NavLink to="/ressources" className={linkCls}>

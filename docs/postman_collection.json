@@ -127,6 +127,18 @@
           }
         },
         {
+          "name": "Create user (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"nouveau.prof\",\n  \"password\": \"prof123\",\n  \"role\": \"PROF\",\n  \"firstName\": \"Salma\",\n  \"lastName\": \"El Idrissi\",\n  \"filiere\": \"Informatique\"\n}" },
+            "url": "{{authUrl}}/auth/users"
+          }
+        },
+        {
           "name": "Update user role",
           "request": {
             "method": "PUT",

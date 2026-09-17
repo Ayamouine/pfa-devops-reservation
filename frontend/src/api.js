@@ -142,6 +142,15 @@ export async function getUsers(token) {
   return parseError(res);
 }
 
+export async function createUser(token, payload) {
+  const res = await fetch(`${AUTH_URL}/auth/users`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...authHeaders(token) },
+    body: JSON.stringify(payload),
+  });
+  return parseError(res);
+}
+
 export async function updateUserRole(token, id, role) {
   const res = await fetch(`${AUTH_URL}/auth/users/${id}/role`, {
     method: 'PUT',
