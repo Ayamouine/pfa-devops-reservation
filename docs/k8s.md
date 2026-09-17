@@ -10,8 +10,7 @@ MySQL. Ils sont utilisés :
 
 ## Déploiement manuel (cluster local)
 
-Pré-requis : `kubectl` pointant sur un cluster avec un StorageClass par défaut
-(kind : `local-path-provisioner`, Docker Desktop : `hostpath`).
+Pré-requis : `kubectl` pointant sur un cluster (kind / minikube / Docker Desktop).
 
 ```bash
 # 1. Secrets (ou contenus dans k8s/secrets.yaml pour la démo)
@@ -43,10 +42,9 @@ Le job `deploy-kind` du pipeline :
 
 1. pousse les images vers GHCR (`ghcr.io/<repo>/<service>:sha-<sha>` + `latest`) ;
 2. crée un cluster `kind` ;
-3. installe `local-path-provisioner` (StorageClass) pour le PVC MySQL ;
-4. charge les images dans le cluster et applique `k8s/` ;
-5. attend le `rollout status` de chaque deployment ;
-6. vérifie les endpoints `/health` des 4 microservices.
+3. charge les images dans le cluster et applique `k8s/` ;
+4. attend le `rollout status` de chaque deployment ;
+5. vérifie les endpoints `/health` des 4 microservices.
 
 Le déploiement continu vers un cluster distant se ferait ensuite en remplaçant
 l'étape "kind" par une action `kubeconfig` (clé API du cluster) et `kubectl apply -f k8s/`.
@@ -58,5 +56,13 @@ l'étape "kind" par une action `kubeconfig` (clé API du cluster) et `kubectl ap
   réels des contrôleurs (pas d'Actuator).
 - `wait-for-mysql` (init container busybox) attend que `mysql:3306` réponde avant
   de démarrer chaque service.
+- `booking-service` reçoit `NOTIFICATION_SERVICE_URL` et `PAYMENT_SERVICE_URL`
+  pour ses appels inter-services (workflow + paiement simulé au cachet du doyen).
+- `auth-service` reçoit les codes d'inscription (`ADMIN_/PROF_/CHEF_/DOYEN_REGISTRATION_CODE`).
+  Les valeurs par défaut de `application.properties` sont utilisées si elles ne sont
+  pas définies ; en production, les fournir via un Secret.
+- MySQL n'a pas de `PersistentVolumeClaim` dans le manifest de démo : les données sont
+  éphémères et les seeds (`UserDataLoader`, `BookingDataLoader`) se réappliquent à chaque
+  démarrage sur base vide. Ajouter un PVC (et un StorageClass) pour un usage persistant.
 - Le secret `k8s/secrets.yaml` contient des identifiants de démonstration
   (`root`/`root`). À ne pas utiliser en production.

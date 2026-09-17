@@ -59,6 +59,14 @@ spec:
                 secretKeyRef:
                   name: pfa-secrets
                   key: JWT_SECRET
+            - name: ADMIN_REGISTRATION_CODE
+              value: "pfa-admin-2026"
+            - name: PROF_REGISTRATION_CODE
+              value: "pfa-prof-2026"
+            - name: CHEF_REGISTRATION_CODE
+              value: "pfa-chef-2026"
+            - name: DOYEN_REGISTRATION_CODE
+              value: "pfa-doyen-2026"
 ---
 apiVersion: v1
 kind: Service

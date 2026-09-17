@@ -2,79 +2,340 @@
   "info": {
     "name": "PFA Reservation API",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0"
+    "version": "2.0"
   },
+  "variable": [
+    { "key": "authUrl", "value": "http://localhost:8081" },
+    { "key": "bookingUrl", "value": "http://localhost:8082" },
+    { "key": "notificationUrl", "value": "http://localhost:8083" },
+    { "key": "paymentUrl", "value": "http://localhost:8084" },
+    { "key": "token", "value": "" },
+    { "key": "refreshToken", "value": "" },
+    { "key": "bookingId", "value": "1" },
+    { "key": "username", "value": "prof" }
+  ],
   "item": [
     {
-      "name": "Auth - Register",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass\"\n}"
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register - Etudiant",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"etudiant.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"ETUDIANT\",\n  \"firstName\": \"Imane\",\n  \"lastName\": \"Rachidi\",\n  \"filiere\": \"Informatique\"\n}"
+            },
+            "url": "{{authUrl}}/auth/register"
+          }
         },
-        "url": "http://localhost:8081/auth/register"
-      }
+        {
+          "name": "Register - Professeur (code requis)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"prof.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"PROF\",\n  \"adminCode\": \"pfa-prof-2026\",\n  \"firstName\": \"Youssef\",\n  \"lastName\": \"Tazi\",\n  \"filiere\": \"Informatique\"\n}"
+            },
+            "url": "{{authUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Register - Chef de filiere (code + filiere requis)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"chef.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"CHEF_FILIERE\",\n  \"adminCode\": \"pfa-chef-2026\",\n  \"filiere\": \"Informatique\"\n}"
+            },
+            "url": "{{authUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Register - Doyen (code requis)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"doyen.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"DOYEN\",\n  \"adminCode\": \"pfa-doyen-2026\"\n}"
+            },
+            "url": "{{authUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set('token', body.token || '');",
+                  "pm.collectionVariables.set('refreshToken', body.refreshToken || '');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"prof123\"\n}"
+            },
+            "url": "{{authUrl}}/auth/login"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
+            "url": "{{authUrl}}/auth/refresh"
+          }
+        },
+        {
+          "name": "Forgot Password (demo)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\"\n}" },
+            "url": "{{authUrl}}/auth/forgot"
+          }
+        },
+        {
+          "name": "Verify Account (demo)",
+          "request": { "method": "GET", "url": "{{authUrl}}/auth/verify?token={{verifyToken}}" }
+        }
+      ]
     },
     {
-      "name": "Auth - Login",
-      "request": {
-        "method": "POST",
-        "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "body": { "mode": "raw", "raw": "{\n  \"username\": \"testuser\",\n  \"password\": \"testpass\"\n}" },
-        "url": "http://localhost:8081/auth/login"
-      }
+      "name": "Admin - Users",
+      "item": [
+        {
+          "name": "List users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{authUrl}}/auth/users"
+          }
+        },
+        {
+          "name": "Update user role",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"role\": \"PROF\"\n}" },
+            "url": "{{authUrl}}/auth/users/2/role"
+          }
+        },
+        {
+          "name": "Update user filiere",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"filiere\": \"Informatique\"\n}" },
+            "url": "{{authUrl}}/auth/users/2/filiere"
+          }
+        }
+      ]
     },
     {
-      "name": "Get Resources",
-      "request": { "method": "GET", "url": "http://localhost:8082/resources" }
+      "name": "Resources",
+      "item": [
+        {
+          "name": "List resources",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/resources"
+          }
+        },
+        {
+          "name": "Create resource (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Salle de cours A103\",\n  \"category\": \"SALLE\",\n  \"capacity\": 50,\n  \"building\": \"Bâtiment A\",\n  \"floor\": \"1er étage\",\n  \"equipment\": \"Vidéoprojecteur, tableau blanc\",\n  \"price\": 0\n}"
+            },
+            "url": "{{bookingUrl}}/resources"
+          }
+        }
+      ]
     },
     {
-      "name": "Check Availability",
-      "request": { "method": "GET", "url": "http://localhost:8082/bookings/availability?resource=Salle%20A&date=2026-10-01" }
+      "name": "Bookings",
+      "item": [
+        {
+          "name": "Check availability",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/availability?resource=Salle%20de%20cours%20A101&date=2026-10-01&creneau=08:30-10:30"
+          }
+        },
+        {
+          "name": "Create booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resource\": \"Salle de cours A101\",\n  \"date\": \"2026-10-01\",\n  \"creneau\": \"08:30-10:30\",\n  \"username\": \"{{username}}\",\n  \"filiere\": \"Informatique\",\n  \"motif\": \"Cours de développement web\"\n}"
+            },
+            "url": "{{bookingUrl}}/bookings"
+          }
+        },
+        {
+          "name": "My bookings",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/mine?username={{username}}"
+          }
+        },
+        {
+          "name": "Pending approvals (chef / doyen)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/approvals"
+          }
+        },
+        {
+          "name": "Approve (chef de filiere)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/{{bookingId}}/approve?comment=Traitement%20valid%C3%A9"
+          }
+        },
+        {
+          "name": "Reject (chef / doyen)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/{{bookingId}}/reject?comment=Salle%20indisponible"
+          }
+        },
+        {
+          "name": "Confirm - cachet doyen (paiement auto)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/{{bookingId}}/confirm?comment=Cachet%20final"
+          }
+        },
+        {
+          "name": "Attach document (PDF)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "body": {
+              "mode": "formdata",
+              "formdata": [{ "key": "file", "type": "file", "src": [] }]
+            },
+            "url": "{{bookingUrl}}/bookings/{{bookingId}}/document"
+          }
+        },
+        {
+          "name": "Download document",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/{{bookingId}}/document"
+          }
+        },
+        {
+          "name": "Cancel booking",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/{{bookingId}}?username={{username}}&role=PROF"
+          }
+        }
+      ]
     },
     {
-      "name": "Create Booking (requires Authorization)",
-      "request": {
-        "method": "POST",
-        "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token}}" } ],
-        "body": { "mode": "raw", "raw": "{\n  \"resource\": \"Salle A\",\n  \"date\": \"2026-10-01\",\n  \"username\": \"testuser\"\n}" },
-        "url": "http://localhost:8082/bookings"
-      }
-    }
-    {
-      "name": "Refresh Token",
-      "request": {
-        "method": "POST",
-        "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "body": { "mode": "raw", "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}" },
-        "url": "http://localhost:8081/auth/refresh"
-      }
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "My notifications (par role/filiere)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{notificationUrl}}/notifications/my"
+          }
+        },
+        {
+          "name": "Unread count",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{notificationUrl}}/notifications/unread-count"
+          }
+        },
+        {
+          "name": "Mark one as read",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{notificationUrl}}/notifications/1/read"
+          }
+        },
+        {
+          "name": "Mark all as read",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{}" },
+            "url": "{{notificationUrl}}/notifications/read-all"
+          }
+        }
+      ]
     },
     {
-      "name": "Forgot Password (demo)",
-      "request": {
-        "method": "POST",
-        "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "body": { "mode": "raw", "raw": "{\n  \"username\": \"testuser\"\n}" },
-        "url": "http://localhost:8081/auth/forgot"
-      }
-    },
-    {
-      "name": "Reset Password (demo)",
-      "request": {
-        "method": "POST",
-        "header": [ { "key": "Content-Type", "value": "application/json" } ],
-        "body": { "mode": "raw", "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"newpass123\"\n}" },
-        "url": "http://localhost:8081/auth/reset"
-      }
-    },
-    {
-      "name": "Verify Account (demo)",
-      "request": { "method": "GET", "url": "http://localhost:8081/auth/verify?token={{verifyToken}}" }
+      "name": "Payments",
+      "item": [
+        {
+          "name": "Create payment (mock)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationId\": \"{{bookingId}}\",\n  \"amount\": 150,\n  \"username\": \"{{username}}\"\n}"
+            },
+            "url": "{{paymentUrl}}/payments"
+          }
+        }
+      ]
     }
   ]
 }
