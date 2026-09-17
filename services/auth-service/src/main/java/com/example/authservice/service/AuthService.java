@@ -2,6 +2,7 @@ package com.example.authservice.service;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,7 @@ import com.example.authservice.entity.VerificationToken;
 import com.example.authservice.model.AuthRequest;
 import com.example.authservice.model.AuthResponse;
 import com.example.authservice.model.RegisterRequest;
+import com.example.authservice.model.UserDto;
 import com.example.authservice.repository.AppUserRepository;
 import com.example.authservice.repository.PasswordResetTokenRepository;
 import com.example.authservice.repository.RefreshTokenRepository;
@@ -28,8 +30,14 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class AuthService {
 
+    public static final List<String> VALID_ROLES = List.of(
+            "USER", "ADMIN", "ETUDIANT", "PROF", "CHEF_FILIERE", "DOYEN");
+
     private final String secret;
     private final String adminRegistrationCode;
+    private final String profRegistrationCode;
+    private final String chefRegistrationCode;
+    private final String doyenRegistrationCode;
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -42,7 +50,10 @@ public class AuthService {
                        VerificationTokenRepository verificationTokenRepository,
                        PasswordResetTokenRepository passwordResetTokenRepository,
                        @Value("${jwt.secret}") String secret,
-                       @Value("${admin.registration.code:admin-code}") String adminRegistrationCode) {
+                       @Value("${admin.registration.code:admin-code}") String adminRegistrationCode,
+                       @Value("${prof.registration.code:pfa-prof-2026}") String profRegistrationCode,
+                       @Value("${chef.registration.code:pfa-chef-2026}") String chefRegistrationCode,
+                       @Value("${doyen.registration.code:pfa-doyen-2026}") String doyenRegistrationCode) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -50,6 +61,9 @@ public class AuthService {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
         this.secret = secret;
         this.adminRegistrationCode = adminRegistrationCode;
+        this.profRegistrationCode = profRegistrationCode;
+        this.chefRegistrationCode = chefRegistrationCode;
+        this.doyenRegistrationCode = doyenRegistrationCode;
     }
 
     @Transactional
@@ -59,21 +73,46 @@ public class AuthService {
         }
 
         String requestedRole = request.getRole() == null || request.getRole().isBlank() ? "USER" : request.getRole();
-
-        String finalRole;
-        if ("ADMIN".equalsIgnoreCase(requestedRole)) {
-            if (request.getAdminCode() == null || !adminRegistrationCode.equals(request.getAdminCode())) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Code administrateur invalide");
-            }
-            finalRole = "ADMIN";
-        } else {
-            finalRole = "USER";
-        }
+        String finalRole = resolveFinalRole(request, requestedRole);
 
         AppUser user = new AppUser(request.getUsername(), passwordEncoder.encode(request.getPassword()), finalRole);
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setFiliere(request.getFiliere());
         AppUser savedUser = userRepository.save(user);
         String refresh = createRefreshToken(savedUser.getUsername());
-        return new AuthResponse(generateToken(savedUser), refresh, savedUser.getUsername(), savedUser.getRole());
+        return toAuthResponse(savedUser, refresh);
+    }
+
+    private String resolveFinalRole(RegisterRequest request, String requestedRole) {
+        String role = requestedRole.toUpperCase();
+        switch (role) {
+            case "ADMIN":
+                requireCode(request.getAdminCode(), adminRegistrationCode, "Code administrateur invalide");
+                return "ADMIN";
+            case "DOYEN":
+                requireCode(request.getAdminCode(), doyenRegistrationCode, "Code doyen invalide");
+                return "DOYEN";
+            case "CHEF_FILIERE":
+                requireCode(request.getAdminCode(), chefRegistrationCode, "Code chef de filière invalide");
+                if (request.getFiliere() == null || request.getFiliere().isBlank()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La filière est requise pour le rôle Chef de filière");
+                }
+                return "CHEF_FILIERE";
+            case "PROF":
+                requireCode(request.getAdminCode(), profRegistrationCode, "Code professeur invalide");
+                return "PROF";
+            case "ETUDIANT":
+                return "ETUDIANT";
+            default:
+                return "USER";
+        }
+    }
+
+    private void requireCode(String provided, String expected, String message) {
+        if (provided == null || !expected.equals(provided)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, message);
+        }
     }
 
     @Transactional
@@ -86,7 +125,7 @@ public class AuthService {
         }
 
         String refresh = createRefreshToken(user.getUsername());
-        return new AuthResponse(generateToken(user), refresh, user.getUsername(), user.getRole());
+        return toAuthResponse(user, refresh);
     }
 
     private String createRefreshToken(String username) {
@@ -109,7 +148,7 @@ public class AuthService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
         String newJwt = generateToken(user);
         String newRefresh = createRefreshToken(user.getUsername());
-        return new AuthResponse(newJwt, newRefresh, user.getUsername(), user.getRole());
+        return toAuthResponse(user, newRefresh);
     }
 
     public String createVerificationToken(String username) {
@@ -161,28 +200,53 @@ public class AuthService {
         return Jwts.builder()
                 .setSubject(user.getUsername())
                 .claim("role", user.getRole())
+                .claim("filiere", user.getFiliere() == null ? "" : user.getFiliere())
+                .claim("firstName", user.getFirstName() == null ? "" : user.getFirstName())
+                .claim("lastName", user.getLastName() == null ? "" : user.getLastName())
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + 86400000))
                 .signWith(Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8)))
                 .compact();
     }
 
-    public java.util.List<com.example.authservice.model.UserDto> getAllUsers() {
+    private AuthResponse toAuthResponse(AppUser user, String refreshToken) {
+        AuthResponse response = new AuthResponse(generateToken(user), refreshToken, user.getUsername(), user.getRole(),
+                user.getFirstName(), user.getLastName(), user.getFiliere());
+        response.setId(user.getId());
+        response.setAvatarColor(user.getAvatarColor());
+        return response;
+    }
+
+    private UserDto toUserDto(AppUser user) {
+        return new UserDto(user.getId(), user.getUsername(), user.getRole(),
+                user.getFirstName(), user.getLastName(), user.getFiliere());
+    }
+
+    public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()
-                .map(u -> new com.example.authservice.model.UserDto(u.getId(), u.getUsername(), u.getRole()))
+                .map(this::toUserDto)
                 .toList();
     }
 
     @Transactional
-    public com.example.authservice.model.UserDto updateUserRole(Long id, String newRole) {
+    public UserDto updateUserRole(Long id, String newRole) {
         AppUser user = userRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
-        if (!"ADMIN".equalsIgnoreCase(newRole) && !"USER".equalsIgnoreCase(newRole)) {
+        if (!VALID_ROLES.contains(newRole.toUpperCase())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Role invalide");
         }
         user.setRole(newRole.toUpperCase());
         AppUser saved = userRepository.save(user);
-        return new com.example.authservice.model.UserDto(saved.getId(), saved.getUsername(), saved.getRole());
+        return toUserDto(saved);
+    }
+
+    @Transactional
+    public UserDto updateUserFiliere(Long id, String filiere) {
+        AppUser user = userRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
+        user.setFiliere(filiere);
+        AppUser saved = userRepository.save(user);
+        return toUserDto(saved);
     }
 
     @Transactional
@@ -192,7 +256,8 @@ public class AuthService {
         }
         userRepository.deleteById(id);
     }
-        @Transactional
+
+    @Transactional
     public AuthResponse updateProfile(String currentUsername, com.example.authservice.model.UpdateProfileRequest request) {
         AppUser user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Utilisateur introuvable"));
@@ -217,8 +282,18 @@ public class AuthService {
             user.setAvatarColor(request.getAvatarColor());
         }
 
+        if (request.getFirstName() != null && !request.getFirstName().isBlank()) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null && !request.getLastName().isBlank()) {
+            user.setLastName(request.getLastName());
+        }
+        if (request.getFiliere() != null) {
+            user.setFiliere(request.getFiliere());
+        }
+
         AppUser saved = userRepository.save(user);
         String refresh = createRefreshToken(saved.getUsername());
-        return new AuthResponse(generateToken(saved), refresh, saved.getUsername(), saved.getRole());
+        return toAuthResponse(saved, refresh);
     }
 }

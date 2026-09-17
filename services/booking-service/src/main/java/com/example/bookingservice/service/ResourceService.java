@@ -48,7 +48,10 @@ public class ResourceService {
         entity.setCategory(dto.getCategory());
         entity.setCapacity(dto.getCapacity());
         entity.setLocation(dto.getLocation());
+        entity.setBuilding(dto.getBuilding());
+        entity.setFloor(dto.getFloor());
         entity.setEquipment(dto.getEquipment());
+        entity.setPhoto(dto.getPhoto());
         entity.setPrice(dto.getPrice());
         entity.setActive(true);
     }
@@ -60,7 +63,10 @@ public class ResourceService {
         dto.setCategory(entity.getCategory());
         dto.setCapacity(entity.getCapacity());
         dto.setLocation(entity.getLocation());
+        dto.setBuilding(entity.getBuilding());
+        dto.setFloor(entity.getFloor());
         dto.setEquipment(entity.getEquipment());
+        dto.setPhoto(entity.getPhoto());
         dto.setPrice(entity.getPrice());
         return dto;
     }

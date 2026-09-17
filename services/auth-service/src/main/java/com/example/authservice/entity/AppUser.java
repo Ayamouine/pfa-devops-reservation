@@ -25,6 +25,13 @@ public class AppUser {
     private String role;
     @jakarta.persistence.Column(name = "avatar_color")
     private String avatarColor = "#c78a3e";
+
+    @Column(name = "first_name")
+    private String firstName;
+    @Column(name = "last_name")
+    private String lastName;
+    private String filiere;
+
     public AppUser() {
     }
 
@@ -64,4 +71,11 @@ public class AppUser {
     public String getAvatarColor() { return avatarColor; }
     
     public void setAvatarColor(String avatarColor) { this.avatarColor = avatarColor; }
+
+    public String getFirstName() { return firstName; }
+    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public String getLastName() { return lastName; }
+    public void setLastName(String lastName) { this.lastName = lastName; }
+    public String getFiliere() { return filiere; }
+    public void setFiliere(String filiere) { this.filiere = filiere; }
 }

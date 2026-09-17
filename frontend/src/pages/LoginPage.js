@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 
+const LOGO = 'https://www.fsts.ac.ma/images/fsts_logo.png';
+
 export default function LoginPage() {
   const { login, showToast } = useAuth();
   const navigate = useNavigate();
@@ -17,10 +19,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const data = await login(form.username, form.password);
-      showToast(`Connecté(e) en tant que ${data.username}.`, 'success');
-      navigate('/');
+      showToast(`Connecté(e) en tant que ${data.firstName || data.username}.`, 'success');
+      navigate('/app');
     } catch (err) {
-      setError(err.message || 'Une erreur est survenue.');
+      setError(err.message || 'Identifiants invalides.');
     } finally {
       setLoading(false);
     }
@@ -29,33 +31,36 @@ export default function LoginPage() {
   return (
     <div className="auth-page">
       <div className="auth-card card">
-        <p className="eyebrow">Plateforme DevOps &middot; Microservices</p>
+        <div className="auth-logo">
+          <img src={LOGO} alt="Logo FST Settat" />
+        </div>
+        <p className="auth-eyebrow">FST Settat · Réservation des salles</p>
         <h1 className="auth-title">Connexion</h1>
         <p className="auth-subtitle">Accédez à votre espace de réservation.</p>
 
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label htmlFor="username">Nom d'utilisateur</label>
-            <input id="username" type="text" name="username" value={form.username} onChange={handleChange} required />
+            <label htmlFor="username">Nom d’utilisateur</label>
+            <input id="username" type="text" name="username" value={form.username} onChange={handleChange} required autoFocus />
           </div>
           <div className="field">
             <label htmlFor="password">Mot de passe</label>
             <input id="password" type="password" name="password" value={form.password} onChange={handleChange} required />
           </div>
-          <button type="submit" className="btn btn-primary btn-block" disabled={loading}>
+          <button type="submit" className="btn btn-accent btn-block" disabled={loading}>
             {loading ? 'Connexion…' : 'Se connecter'}
           </button>
         </form>
 
         {error && <p className="message error">{error}</p>}
-        <p className="auth-forgot" style={{ textAlign: 'center', marginTop: '0.5rem' }}>
-          <Link to="/forgot">Mot de passe oublié ?</Link>
-        </p>
 
         <p className="auth-switch">
-          Pas encore de compte ? <Link to="/register">Créer un compte</Link>
+          <Link to="/forgot">Mot de passe oublié ?</Link>
         </p>
-        
+        <p className="auth-switch">
+          Pas de compte ? <Link to="/register">Créer un compte</Link> ·{' '}
+          <Link to="/">Accueil</Link>
+        </p>
       </div>
     </div>
   );

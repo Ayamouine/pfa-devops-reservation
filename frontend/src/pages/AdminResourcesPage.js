@@ -1,15 +1,26 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { BOOKING_URL, authHeaders } from '../api';
+import { getResources, createResource, updateResource, deleteResource } from '../api';
 
 const CATEGORIES = [
-  { value: 'SALLE', label: 'Salle' },
-  { value: 'EVENEMENT', label: 'Événement' },
-  { value: 'RENDEZVOUS', label: 'Rendez-vous' },
-  { value: 'ATELIER', label: 'Atelier' },
+  { value: 'SALLE', label: 'Salle de cours' },
+  { value: 'TP', label: 'Salle de TP' },
+  { value: 'AMPHI', label: 'Amphithéâtre' },
+  { value: 'REUNION', label: 'Salle de réunion' },
+  { value: 'AUTRE', label: 'Autre' },
 ];
 
-const emptyForm = { name: '', category: 'SALLE', capacity: 1, price: 0 };
+const emptyForm = {
+  name: '',
+  category: 'SALLE',
+  capacity: 30,
+  price: 0,
+  building: '',
+  floor: '',
+  location: '',
+  equipment: '',
+  photo: '',
+};
 
 export default function AdminResourcesPage() {
   const { token, showToast, askConfirm } = useAuth();
@@ -20,8 +31,7 @@ export default function AdminResourcesPage() {
   const [saving, setSaving] = useState(false);
 
   const load = useCallback(() => {
-    fetch(`${BOOKING_URL}/resources`, { headers: authHeaders(token) })
-      .then((res) => res.json())
+    getResources(token)
       .then(setResources)
       .catch(() => setResources([]))
       .finally(() => setLoading(false));
@@ -34,9 +44,19 @@ export default function AdminResourcesPage() {
     setForm({ ...form, [name]: name === 'capacity' || name === 'price' ? Number(value) : value });
   };
 
-  const startEdit = (resource) => {
-    setEditingId(resource.id);
-    setForm({ name: resource.name, category: resource.category, capacity: resource.capacity, price: resource.price });
+  const startEdit = (r) => {
+    setEditingId(r.id);
+    setForm({
+      name: r.name,
+      category: r.category,
+      capacity: r.capacity || 30,
+      price: r.price || 0,
+      building: r.building || '',
+      floor: r.floor || '',
+      location: r.location || '',
+      equipment: r.equipment || '',
+      photo: r.photo || '',
+    });
   };
 
   const cancelEdit = () => {
@@ -48,15 +68,12 @@ export default function AdminResourcesPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      const url = editingId ? `${BOOKING_URL}/resources/${editingId}` : `${BOOKING_URL}/resources`;
-      const method = editingId ? 'PUT' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-        body: JSON.stringify(form),
-      });
-      if (!res.ok) throw new Error(await res.text());
-      showToast(editingId ? 'Ressource modifiée.' : 'Ressource créée.', 'success');
+      if (editingId) {
+        await updateResource(token, editingId, form);
+      } else {
+        await createResource(token, form);
+      }
+      showToast(editingId ? 'Salle modifiée.' : 'Salle créée.', 'success');
       cancelEdit();
       load();
     } catch (err) {
@@ -66,18 +83,14 @@ export default function AdminResourcesPage() {
     }
   };
 
-  const handleDelete = (resource) => {
-    askConfirm(`Supprimer la ressource "${resource.name}" ?`, async () => {
+  const handleDelete = (r) => {
+    askConfirm(`Supprimer la salle "${r.name}" ?`, async () => {
       try {
-        const res = await fetch(`${BOOKING_URL}/resources/${resource.id}`, {
-          method: 'DELETE',
-          headers: authHeaders(token),
-        });
-        if (!res.ok) throw new Error(await res.text());
-        showToast('Ressource supprimée.', 'success');
+        await deleteResource(token, r.id);
+        showToast('Salle supprimée.', 'success');
         load();
       } catch (err) {
-        showToast(err.message || 'Impossible de supprimer cette ressource.', 'error');
+        showToast(err.message || 'Impossible de supprimer cette salle.', 'error');
       }
     });
   };
@@ -85,33 +98,63 @@ export default function AdminResourcesPage() {
   return (
     <div className="page">
       <header className="page-header">
-        <h1>Gestion des ressources</h1>
-        <p>Ajoute, modifie ou supprime les salles, événements et créneaux réservables.</p>
+        <h1 className="page-title">Gestion des salles</h1>
+        <p className="page-subtitle">
+          Ajoutez ou mettez à jour les salles de la FST : bâtiment, étage, type, capacité, prix.
+        </p>
       </header>
 
       <section className="card">
-        <h2>{editingId ? 'Modifier la ressource' : 'Nouvelle ressource'}</h2>
+        <h2>{editingId ? 'Modifier la salle' : 'Nouvelle salle'}</h2>
         <form onSubmit={handleSubmit}>
-          <div className="field">
-            <label htmlFor="name">Nom</label>
-            <input id="name" type="text" name="name" value={form.name} onChange={handleChange} required />
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="name">Nom</label>
+              <input id="name" type="text" name="name" value={form.name} onChange={handleChange} required />
+            </div>
+            <div className="field">
+              <label htmlFor="category">Type</label>
+              <select id="category" name="category" value={form.category} onChange={handleChange}>
+                {CATEGORIES.map((c) => <option value={c.value} key={c.value}>{c.label}</option>)}
+              </select>
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="category">Catégorie</label>
-            <select id="category" name="category" value={form.category} onChange={handleChange}>
-              {CATEGORIES.map((c) => <option value={c.value} key={c.value}>{c.label}</option>)}
-            </select>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="building">Bâtiment</label>
+              <input id="building" type="text" name="building" placeholder="Ex. Bâtiment A" value={form.building} onChange={handleChange} />
+            </div>
+            <div className="field">
+              <label htmlFor="floor">Étage / local</label>
+              <input id="floor" type="text" name="floor" placeholder="Ex. RDC, 1er étage" value={form.floor} onChange={handleChange} />
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="capacity">Capacité (nombre de participants)</label>
-            <input id="capacity" type="number" min="1" name="capacity" value={form.capacity} onChange={handleChange} required />
+          <div className="form-grid form-grid-3">
+            <div className="field">
+              <label htmlFor="capacity">Capacité</label>
+              <input id="capacity" type="number" min="1" name="capacity" value={form.capacity} onChange={handleChange} required />
+            </div>
+            <div className="field">
+              <label htmlFor="price">Prix (MAD)</label>
+              <input id="price" type="number" min="0" step="0.01" name="price" value={form.price} onChange={handleChange} required />
+            </div>
+            <div className="field">
+              <label htmlFor="location">Localisation</label>
+              <input id="location" type="text" name="location" placeholder="Ex. Bâtiment A, Settat" value={form.location} onChange={handleChange} />
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="price">Prix (MAD)</label>
-            <input id="price" type="number" min="0" step="0.01" name="price" value={form.price} onChange={handleChange} required />
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="equipment">Équipements</label>
+              <input id="equipment" type="text" name="equipment" placeholder="Ex. Vidéoprojecteur, tableau interactif" value={form.equipment} onChange={handleChange} />
+            </div>
+            <div className="field">
+              <label htmlFor="photo">URL photo</label>
+              <input id="photo" type="text" name="photo" placeholder="https://…" value={form.photo} onChange={handleChange} />
+            </div>
           </div>
           <button type="submit" className="btn btn-accent btn-block" disabled={saving}>
-            {saving ? 'Enregistrement…' : editingId ? 'Enregistrer les modifications' : 'Créer la ressource'}
+            {saving ? 'Enregistrement…' : editingId ? 'Enregistrer les modifications' : 'Créer la salle'}
           </button>
           {editingId && (
             <button type="button" className="btn btn-ghost btn-block" onClick={cancelEdit}>
@@ -122,18 +165,19 @@ export default function AdminResourcesPage() {
       </section>
 
       <section className="card">
-        <h2>Ressources existantes</h2>
+        <h2>Salles existantes</h2>
         {loading && <p className="empty-state">Chargement…</p>}
-        {!loading && resources.length === 0 && <p className="empty-state">Aucune ressource pour le moment.</p>}
+        {!loading && resources.length === 0 && <p className="empty-state">Aucune salle pour le moment.</p>}
         {!loading && resources.length > 0 && (
           <div className="ticket-list">
             {resources.map((r) => (
               <div className="ticket" key={r.id}>
+                <div className={`ticket-stub ${r.price ? 'status-confirmed' : 'status-pending'}`} />
                 <div className="ticket-body">
                   <div className="ticket-main">
                     <span className="ticket-resource">{r.name}</span>
                     <span className="ticket-meta">
-                      {CATEGORIES.find((c) => c.value === r.category)?.label || r.category} · capacité {r.capacity} · {r.price} MAD
+                      {r.building || '—'}{r.floor ? ` · ${r.floor}` : ''} · capacité {r.capacity} · {r.price} MAD
                     </span>
                   </div>
                   <div className="ticket-right">

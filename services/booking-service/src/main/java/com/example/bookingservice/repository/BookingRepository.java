@@ -9,6 +9,10 @@ import com.example.bookingservice.entity.BookingEntity;
 
 public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     boolean existsByResourceAndReservationDate(String resource, LocalDate reservationDate);
+    boolean existsByResourceAndReservationDateAndCreneau(String resource, LocalDate reservationDate, String creneau);
     List<BookingEntity> findByResource(String resource);
     List<BookingEntity> findByUsername(String username);
+    List<BookingEntity> findByFiliere(String filiere);
+    List<BookingEntity> findByStatus(String status);
+    List<BookingEntity> findByUsernameAndFiliere(String username, String filiere);
 }

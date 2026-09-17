@@ -1,9 +1,30 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
-import { login as apiLogin, register as apiRegister, refreshToken as apiRefresh, forgotPassword as apiForgot, resetPassword as apiReset, verifyAccount as apiVerify } from './api';
+import {
+  login as apiLogin,
+  register as apiRegister,
+  refreshToken as apiRefresh,
+  forgotPassword as apiForgot,
+  resetPassword as apiReset,
+  verifyAccount as apiVerify,
+  updateProfile as apiUpdateProfile,
+} from './api';
 
 const AuthContext = createContext(null);
 
 const AUTH_STORAGE_KEY = 'pfa_auth';
+
+function sanitizeUser(data) {
+  if (!data) return null;
+  return {
+    id: data.id,
+    username: data.username,
+    role: data.role,
+    firstName: data.firstName || '',
+    lastName: data.lastName || '',
+    filiere: data.filiere || '',
+    avatarColor: data.avatarColor || '',
+  };
+}
 
 function loadStoredAuth() {
   try {
@@ -13,7 +34,7 @@ function loadStoredAuth() {
     return {
       token: data.token || null,
       refreshToken: data.refreshToken || null,
-      currentUser: data.currentUser ? { username: data.currentUser.username, role: data.currentUser.role } : null,
+      currentUser: data.currentUser ? sanitizeUser(data.currentUser) : null,
     };
   } catch {
     return { token: null, refreshToken: null, currentUser: null };
@@ -58,7 +79,7 @@ export function AuthProvider({ children }) {
     const data = await apiLogin(username, password);
     setToken(data.token);
     setRefreshToken(data.refreshToken);
-    setCurrentUser({ username: data.username, role: data.role });
+    setCurrentUser(sanitizeUser(data));
     return data;
   }, []);
 
@@ -66,7 +87,7 @@ export function AuthProvider({ children }) {
     const data = await apiRegister(form);
     setToken(data.token);
     setRefreshToken(data.refreshToken);
-    setCurrentUser({ username: data.username, role: data.role });
+    setCurrentUser(sanitizeUser(data));
     return data;
   }, []);
 
@@ -81,7 +102,7 @@ export function AuthProvider({ children }) {
     const data = await apiRefresh(refreshToken);
     setToken(data.token);
     setRefreshToken(data.refreshToken);
-    setCurrentUser({ username: data.username, role: data.role });
+    setCurrentUser(sanitizeUser(data));
     return data;
   }, [refreshToken]);
 
@@ -97,11 +118,27 @@ export function AuthProvider({ children }) {
     return apiVerify(token);
   }, []);
 
+  const saveProfile = useCallback(async (username, payload) => {
+    const data = await apiUpdateProfile(token, username, payload);
+    setCurrentUser(sanitizeUser(data));
+    return data;
+  }, [token]);
+
+  const role = currentUser?.role || '';
   const value = {
     token,
     currentUser,
     setCurrentUser,
-    isAdmin: currentUser?.role === 'ADMIN',
+    role,
+    isAdmin: role === 'ADMIN',
+    isEtudiant: role === 'ETUDIANT',
+    isProf: role === 'PROF',
+    isChef: role === 'CHEF_FILIERE',
+    isDoyen: role === 'DOYEN',
+    canBook: role === 'PROF' || role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN',
+    fullName: currentUser
+      ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.username
+      : '',
     login,
     register,
     logout,
@@ -110,6 +147,7 @@ export function AuthProvider({ children }) {
     forgot,
     reset,
     verify,
+    saveProfile,
     showToast,
     toasts,
     askConfirm,

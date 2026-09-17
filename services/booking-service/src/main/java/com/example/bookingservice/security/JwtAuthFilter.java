@@ -61,6 +61,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         String tokenUsername = claims.getSubject();
         String tokenRole = String.valueOf(claims.get("role"));
+        String tokenFiliere = claims.get("filiere") == null ? "" : String.valueOf(claims.get("filiere"));
 
         boolean isFullBookingList = "GET".equalsIgnoreCase(method) && path.endsWith("/bookings");
         if (isFullBookingList && !"ADMIN".equalsIgnoreCase(tokenRole)) {
@@ -82,6 +83,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         request.setAttribute("jwtUsername", tokenUsername);
         request.setAttribute("jwtRole", tokenRole);
+        request.setAttribute("jwtFiliere", tokenFiliere);
 
         filterChain.doFilter(request, response);
     }

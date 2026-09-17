@@ -80,6 +80,13 @@ public com.example.authservice.model.UserDto updateRole(
     return authService.updateUserRole(id, body.getRole());
 }
 
+@org.springframework.web.bind.annotation.PutMapping("/users/{id}/filiere")
+public com.example.authservice.model.UserDto updateFiliere(
+        @org.springframework.web.bind.annotation.PathVariable Long id,
+        @RequestBody com.example.authservice.model.RoleUpdateRequest body) {
+    return authService.updateUserFiliere(id, body.getFiliere());
+}
+
 @org.springframework.web.bind.annotation.DeleteMapping("/users/{id}")
 public void deleteUser(@org.springframework.web.bind.annotation.PathVariable Long id) {
     authService.deleteUser(id);

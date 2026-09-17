@@ -5,11 +5,14 @@ import { AuthProvider, useAuth } from './AuthContext';
 import Sidebar from './components/Sidebar';
 import ToastStack from './components/Toast';
 import ConfirmModal from './components/ConfirmModal';
+import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import ForgotResetPage from './pages/ForgotResetPage';
 import DashboardPage from './pages/DashboardPage';
 import MyBookingsPage from './pages/MyBookingsPage';
+import ApprovalsPage from './pages/ApprovalsPage';
+import NotificationsPage from './pages/NotificationsPage';
 import ResourcesPage from './pages/ResourcesPage';
 import ProfilePage from './pages/ProfilePage';
 import AdminPage from './pages/AdminPage';
@@ -48,6 +51,12 @@ function PublicOnlyRoute({ children }) {
   return children;
 }
 
+function HomeRoute() {
+  const { currentUser } = useAuth();
+  if (currentUser) return <Navigate to="/app" replace />;
+  return <HomePage />;
+}
+
 function AppRoutes() {
   return (
     <Routes>
@@ -55,8 +64,11 @@ function AppRoutes() {
       <Route path="/register" element={<PublicOnlyRoute><RegisterPage /></PublicOnlyRoute>} />
       <Route path="/forgot" element={<PublicOnlyRoute><ForgotResetPage /></PublicOnlyRoute>} />
       <Route path="/reset" element={<PublicOnlyRoute><ForgotResetPage /></PublicOnlyRoute>} />
-      <Route path="/" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
+      <Route path="/" element={<HomeRoute />} />
+      <Route path="/app" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
       <Route path="/reservations" element={<PrivateRoute><MyBookingsPage /></PrivateRoute>} />
+      <Route path="/validations" element={<PrivateRoute><ApprovalsPage /></PrivateRoute>} />
+      <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
       <Route path="/ressources" element={<PrivateRoute><ResourcesPage /></PrivateRoute>} />
       <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
       <Route path="/profil" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />

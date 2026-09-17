@@ -45,7 +45,10 @@ class AuthServiceTest {
                 verificationTokenRepository,
                 passwordResetTokenRepository,
                 "test-secret-key-for-unit-tests-only",
-                "test-admin-code");
+                "test-admin-code",
+                "test-prof-code",
+                "test-chef-code",
+                "test-doyen-code");
     }
 
     @Test
@@ -154,5 +157,124 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.login(request))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Invalid credentials");
+    }
+
+    @Test
+    void register_createsEtudiant_withoutCode() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("etudiant1");
+        request.setPassword("secret123");
+        request.setRole("ETUDIANT");
+
+        when(userRepository.existsByUsername("etudiant1")).thenReturn(false);
+        when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.getRole()).isEqualTo("ETUDIANT");
+    }
+
+    @Test
+    void register_createsProf_whenProfCodeIsCorrect() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("prof1");
+        request.setPassword("secret123");
+        request.setRole("PROF");
+        request.setAdminCode("test-prof-code");
+        request.setFirstName("Karim");
+        request.setLastName("Bennani");
+        request.setFiliere("IDSD");
+
+        when(userRepository.existsByUsername("prof1")).thenReturn(false);
+        when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.getRole()).isEqualTo("PROF");
+        assertThat(response.getFirstName()).isEqualTo("Karim");
+        assertThat(response.getFiliere()).isEqualTo("IDSD");
+    }
+
+    @Test
+    void register_throwsForbidden_whenProfCodeIsWrong() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("prof1");
+        request.setPassword("secret123");
+        request.setRole("PROF");
+        request.setAdminCode("wrong-code");
+
+        when(userRepository.existsByUsername("prof1")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Code professeur invalide");
+    }
+
+    @Test
+    void register_createsChefFiliere_whenChefCodeIsCorrectAndFiliereProvided() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("chef1");
+        request.setPassword("secret123");
+        request.setRole("CHEF_FILIERE");
+        request.setAdminCode("test-chef-code");
+        request.setFiliere("GI");
+
+        when(userRepository.existsByUsername("chef1")).thenReturn(false);
+        when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.getRole()).isEqualTo("CHEF_FILIERE");
+        assertThat(response.getFiliere()).isEqualTo("GI");
+    }
+
+    @Test
+    void register_throwsBadRequest_whenChefCodeGivenButNoFiliere() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("chef1");
+        request.setPassword("secret123");
+        request.setRole("CHEF_FILIERE");
+        request.setAdminCode("test-chef-code");
+
+        when(userRepository.existsByUsername("chef1")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("La filière est requise");
+    }
+
+    @Test
+    void register_createsDoyen_whenDoyenCodeIsCorrect() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("doyen1");
+        request.setPassword("secret123");
+        request.setRole("DOYEN");
+        request.setAdminCode("test-doyen-code");
+
+        when(userRepository.existsByUsername("doyen1")).thenReturn(false);
+        when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.getRole()).isEqualTo("DOYEN");
+    }
+
+    @Test
+    void register_throwsForbidden_whenDoyenCodeIsWrong() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("doyen1");
+        request.setPassword("secret123");
+        request.setRole("DOYEN");
+        request.setAdminCode("nope");
+
+        when(userRepository.existsByUsername("doyen1")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Code doyen invalide");
     }
 }

@@ -1,193 +1,354 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { BOOKING_URL, PAYMENT_URL, authHeaders, statusClass, statusLabel, createBooking as apiCreateBooking, checkAvailability as apiCheckAvailability, pay as apiPay, confirmBooking as apiConfirmBooking, cancelBooking as apiCancelBooking, getResources as apiGetResources } from '../api';
+import {
+  FILIERES,
+  getResources,
+  createBooking,
+  getMyBookings,
+  updateBooking,
+  cancelBooking,
+  attachDocument,
+  downloadDocument,
+  statusClass,
+  statusLabel,
+  checkAvailability,
+} from '../api';
+
+const CRENEAUX = ['08:30-10:30', '10:45-12:45', '14:00-16:00', '16:15-18:15'];
+
+function historyClass(status) {
+  const s = (status || '').toLowerCase();
+  if (s === 'confirmed' || s === 'payment') return 'status-confirmed';
+  if (s === 'rejected' || s === 'cancelled') return 'status-rejected';
+  if (s === 'approved') return 'status-approved';
+  if (s === 'document') return 'status-info';
+  return 'status-pending';
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString(undefined, {
+    day: '2-digit',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 export default function MyBookingsPage() {
   const { currentUser, token, showToast, askConfirm } = useAuth();
-  const [allBookings, setAllBookings] = useState([]);
-  const [myBookings, setMyBookings] = useState([]);
-  const [bookingForm, setBookingForm] = useState({ resource: '', date: '' });
-  const [bookingMessage, setBookingMessage] = useState('');
-  const [bookingError, setBookingError] = useState('');
-  const [cancellingId, setCancellingId] = useState(null);
-  const [payingId, setPayingId] = useState(null);
-  const [editingBooking, setEditingBooking] = useState(null);
-  const [editDate, setEditDate] = useState('');
-  const [savingEdit, setSavingEdit] = useState(false);
+  const [resources, setResources] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const fileRef = useRef(null);
 
-const loadAll = useCallback(() => {
-  apiGetResources()
-    .then(setAllBookings)
-    .catch(() => setAllBookings([]));
-}, []);
+  const [form, setForm] = useState({
+    resource: '',
+    date: '',
+    creneau: CRENEAUX[0],
+    motif: '',
+    filiere: currentUser?.filiere || '',
+  });
+  const [available, setAvailable] = useState(null);
+  const [checking, setChecking] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [file, setFile] = useState(null);
 
-const loadMine = useCallback(() => {
-  fetch(`${BOOKING_URL}/bookings/mine?username=${encodeURIComponent(currentUser.username)}`, { headers: authHeaders(token) })
-    .then((res) => res.json())
-    .then(setMyBookings)
-    .catch(() => setMyBookings([]));
-}, [currentUser.username, token]);
+  const [editingId, setEditingId] = useState(null);
+  const [editState, setEditState] = useState({ date: '', creneau: CRENEAUX[0], motif: '' });
 
-  const refresh = useCallback(() => {
-    loadAll();
-    loadMine();
-  }, [loadAll, loadMine]);
+  const load = useCallback(() => {
+    return Promise.all([getResources(token), getMyBookings(token, currentUser.username)])
+      .then(([res, books]) => {
+        setResources(Array.isArray(res) ? res : []);
+        const list = Array.isArray(books) ? books : [];
+        setBookings(list.sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || ''))));
+        return list;
+      })
+      .catch(() => [])
+      .finally(() => setLoading(false));
+  }, [token, currentUser.username]);
 
   useEffect(() => {
-    refresh();
-  }, [refresh]);
+    load();
+  }, [load]);
 
-  const knownResources = Array.from(new Set(allBookings.map((b) => b.resource).filter(Boolean)));
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((f) => ({ ...f, [name]: value }));
+    if (name === 'resource' || name === 'date' || name === 'creneau') setAvailable(null);
+  };
 
-  const handleBookingChange = (e) => setBookingForm({ ...bookingForm, [e.target.name]: e.target.value });
-
-  const handleBookingSubmit = async (e) => {
-    e.preventDefault();
-    setBookingError('');
-    setBookingMessage('');
+  const handleCheck = async () => {
+    if (!form.resource || !form.date) return;
+    setChecking(true);
+    setAvailable(null);
     try {
-      const data = await apiCreateBooking(token, { ...bookingForm, status: 'pending', username: currentUser.username });
-      setBookingMessage(`Réservation créée : ${data.resource} le ${data.date}.`);
-      setBookingForm({ resource: '', date: '' });
-      refresh();
-    } catch (err) {
-      setBookingError(err.message || 'Une erreur est survenue.');
+      const data = await checkAvailability(form.resource, form.date, token, form.creneau);
+      setAvailable(data.available);
+    } catch (e) {
+      setAvailable(false);
+    } finally {
+      setChecking(false);
     }
   };
 
-  const handleCancelBooking = (booking) => {
-    askConfirm(`Annuler la réservation "${booking.resource}" du ${booking.date} ?`, async () => {
-      setCancellingId(booking.id);
+  useEffect(() => {
+    if (form.resource && form.date) handleCheck();
+  }, [form.resource, form.date, form.creneau]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const payload = {
+        resource: form.resource,
+        date: form.date,
+        creneau: form.creneau,
+        motif: form.motif,
+        filiere: form.filiere,
+        username: currentUser.username,
+        status: 'pending',
+      };
+      const created = await createBooking(token, payload);
+      if (file) {
+        const updated = await attachDocument(token, created.id, file);
+        showToast('Demande créée avec document justificatif.', 'success');
+        return updated;
+      }
+      showToast('Demande de réservation envoyée au chef de filière.', 'success');
+      setForm((f) => ({ ...f, resource: '', date: '', motif: '', creneau: CRENEAUX[0] }));
+      setFile(null);
+      if (fileRef.current) fileRef.current.value = '';
+      load();
+    } catch (err) {
+      showToast(err.message || 'Impossible de créer la demande.', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const startEdit = (b) => {
+    setEditingId(b.id);
+    setEditState({ date: b.date, creneau: b.creneau || CRENEAUX[0], motif: b.motif || '' });
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditState({ date: '', creneau: CRENEAUX[0], motif: '' });
+  };
+
+  const saveEdit = async () => {
+    try {
+      await updateBooking(token, editingId, {
+        resource: bookings.find((b) => b.id === editingId)?.resource,
+        date: editState.date,
+        creneau: editState.creneau,
+        motif: editState.motif,
+      });
+      showToast('Demande mise à jour (retour en attente).', 'success');
+      cancelEdit();
+      load();
+    } catch (err) {
+      showToast(err.message || 'Impossible de modifier la demande.', 'error');
+    }
+  };
+
+  const handleCancel = (b) => {
+    askConfirm(`Annuler la demande "${b.resource}" du ${b.date} ?`, async () => {
       try {
-        await apiCancelBooking(token, booking.id, currentUser.username, currentUser.role);
-        showToast('Réservation annulée.', 'success');
-        refresh();
+        await cancelBooking(token, b.id, currentUser.username, currentUser.role);
+        showToast('Demande supprimée.', 'success');
+        load();
       } catch (err) {
-        showToast(err.message || "Impossible d'annuler cette réservation.", 'error');
-      } finally {
-        setCancellingId(null);
+        showToast(err.message || 'Impossible de supprimer la demande.', 'error');
       }
     });
   };
 
-  const handlePayBooking = async (booking) => {
-    setPayingId(booking.id);
-    try {
-      await apiPay(token, { reservationId: String(booking.id), amount: 150, username: currentUser.username });
-      await apiConfirmBooking(token, booking.id, currentUser.username, currentUser.role);
-      showToast('Paiement effectué, réservation confirmée.', 'success');
-      refresh();
-    } catch (err) {
-      showToast(err.message || 'Le paiement a échoué.', 'error');
-    } finally {
-      setPayingId(null);
+  const handleUpload = async (booking) => {
+    if (!fileRef.current?.files?.length) {
+      showToast('Sélectionnez d’abord un fichier PDF.', 'error');
+      return;
     }
-  };
-
-  const startEdit = (booking) => {
-    setEditingBooking(booking);
-    setEditDate(booking.date);
-  };
-
-  const cancelEdit = () => {
-    setEditingBooking(null);
-    setEditDate('');
-  };
-
-  const saveEdit = async () => {
-    setSavingEdit(true);
     try {
-      const params = new URLSearchParams({ username: currentUser.username, role: currentUser.role });
-      const res = await fetch(`${BOOKING_URL}/bookings/${editingBooking.id}?${params.toString()}`, {
-        method: 'PUT',
-        headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-        body: JSON.stringify({ resource: editingBooking.resource, date: editDate }),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        throw new Error(res.status === 409 ? 'Cette ressource est déjà réservée à cette date.' : errText);
+      const updated = await attachDocument(token, booking.id, fileRef.current.files[0]);
+      if (updated && updated.id) {
+        showToast('Document justificatif joint.', 'success');
+        load();
       }
-      showToast('Réservation modifiée.', 'success');
-      cancelEdit();
-      refresh();
     } catch (err) {
-      showToast(err.message || 'Impossible de modifier cette réservation.', 'error');
-    } finally {
-      setSavingEdit(false);
+      showToast(err.message || 'Impossible de joindre le document.', 'error');
     }
   };
+
+  const handleViewDocument = async (booking) => {
+    try {
+      const { url, filename } = await downloadDocument(token, booking.id);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast(err.message || 'Document indisponible.', 'error');
+    }
+  };
+
+  const userCanAct = (b) =>
+    (currentUser.role === 'PROF' || currentUser.role === 'ADMIN') || b.username === currentUser.username;
 
   return (
     <div className="page">
       <header className="page-header">
-        <h1>Mes réservations</h1>
-        <p>Créez, modifiez et suivez vos réservations.</p>
+        <h1 className="page-title">Mes demandes</h1>
+        <p className="page-subtitle">
+          Demande de salle soumise au chef de filière, puis cachet du doyen.
+        </p>
       </header>
 
       <section className="card">
-        <h2>Nouvelle réservation</h2>
-        <form onSubmit={handleBookingSubmit}>
+        <h2>Nouvelle demande de salle</h2>
+        <form onSubmit={handleSubmit}>
           <div className="field">
-            <label htmlFor="resource">Ressource</label>
-            <input
-              id="resource"
-              type="text"
-              name="resource"
-              placeholder="Ex. Salle A, Vidéoprojecteur…"
-              value={bookingForm.resource}
-              onChange={handleBookingChange}
-              list="resource-options"
-              required
-            />
-            <datalist id="resource-options">
-              {knownResources.map((r) => <option value={r} key={r} />)}
-            </datalist>
+            <label htmlFor="resource">Salle / ressource</label>
+            <select id="resource" name="resource" value={form.resource} onChange={handleChange} required>
+              <option value="">— Choisir une salle —</option>
+              {resources.map((r) => (
+                <option key={r.id} value={r.name}>
+                  {r.name} {r.building ? `· ${r.building}` : ''}{r.capacity ? ` · ${r.capacity} pers.` : ''}
+                </option>
+              ))}
+            </select>
           </div>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="date">Date</label>
+              <input id="date" type="date" name="date" value={form.date} onChange={handleChange} min={new Date().toISOString().slice(0, 10)} required />
+            </div>
+            <div className="field">
+              <label htmlFor="creneau">Créneau</label>
+              <select id="creneau" name="creneau" value={form.creneau} onChange={handleChange}>
+                {CRENEAUX.map((c) => <option value={c} key={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          {available !== null && (
+            <p className={`availability-hint ${available ? 'ok' : 'busy'}`}>
+              {available
+                ? 'Cette salle est disponible sur ce créneau.'
+                : 'Cette salle est déjà réservée pour ce créneau.'}
+            </p>
+          )}
           <div className="field">
-            <label htmlFor="date">Date</label>
-            <input id="date" type="date" name="date" value={bookingForm.date} onChange={handleBookingChange} required />
+            <label htmlFor="motif">Motif de la réservation</label>
+            <textarea id="motif" name="motif" rows="3" value={form.motif} onChange={handleChange} placeholder="Ex. Cours de Smart Systems, TP de Bases de Données…" required />
           </div>
-          <button type="submit" className="btn btn-accent btn-block">Réserver</button>
+          <div className="form-grid">
+            <div className="field">
+              <label htmlFor="filiere">Filière</label>
+              <select id="filiere" name="filiere" value={form.filiere} onChange={handleChange} required>
+                <option value="">— Choisir la filière —</option>
+                {FILIERES.map((f) => <option value={f} key={f}>{f}</option>)}
+              </select>
+            </div>
+            <div className="field">
+              <label htmlFor="document">Document justificatif (PDF, optionnel)</label>
+              <input id="document" ref={fileRef} type="file" accept="application/pdf,.pdf" onChange={(e) => setFile(e.target.files[0])} />
+            </div>
+          </div>
+          <button type="submit" className="btn btn-accent btn-block" disabled={submitting || checking || available === false}>
+            {submitting ? 'Envoi…' : 'Envoyer la demande de réservation'}
+          </button>
         </form>
-        {bookingMessage && <p className="message success">{bookingMessage}</p>}
-        {bookingError && <p className="message error">{bookingError}</p>}
       </section>
 
       <section className="card">
-        <h2>Vos réservations</h2>
-        {myBookings.length === 0 && <p className="empty-state">Aucune réservation pour le moment.</p>}
-        {myBookings.length > 0 && (
+        <div className="card-header-row">
+          <h2>Suivi de mes demandes</h2>
+        </div>
+        {loading && <p className="empty-state">Chargement…</p>}
+        {!loading && bookings.length === 0 && (
+          <p className="empty-state">
+            Aucune demande pour le moment. <Link to="/ressources">Parcourez les salles</Link>.
+          </p>
+        )}
+        {!loading && bookings.length > 0 && (
           <div className="ticket-list">
-            {myBookings.map((booking) => (
-              <div className="ticket" key={booking.id}>
-                <div className={`ticket-stub ${statusClass(booking.status)}`} />
+            {bookings.map((b) => (
+              <div className="ticket" key={b.id}>
+                <div className={`ticket-stub ${statusClass(b.status)}`} />
                 <div className="ticket-body">
                   <div className="ticket-main">
-                    <span className="ticket-resource">{booking.resource}</span>
-                    <span className="ticket-meta">{booking.date}</span>
+                    <span className="ticket-resource">{b.resource}</span>
+                    <span className="ticket-meta">
+                      {b.date} · {b.creneau} · {b.filiere || 'Sans filière'}
+                    </span>
                   </div>
                   <div className="ticket-right">
-                    <span className={`badge ${statusClass(booking.status)}`}>{statusLabel(booking.status)}</span>
-                    {(booking.status || '').toLowerCase() === 'pending' && (
-                      <button className="btn btn-accent" onClick={() => handlePayBooking(booking)} disabled={payingId === booking.id} type="button">
-                        {payingId === booking.id ? 'Paiement…' : 'Payer'}
-                      </button>
+                    <span className={`badge ${statusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                    {(b.status === 'PENDING' || b.status === 'pending') && userCanAct(b) && (
+                      <>
+                        <button className="btn btn-ghost" type="button" onClick={() => startEdit(b)}>Modifier</button>
+                        <button className="btn btn-ghost" type="button" onClick={handleUpload} title="Joindre un PDF">Joindre PDF</button>
+                        <button className="btn btn-danger-outline" type="button" onClick={() => handleCancel(b)}>Annuler</button>
+                      </>
                     )}
-                    {(booking.status || '').toLowerCase() !== 'cancelled' && (
-                      <button className="btn btn-ghost" onClick={() => startEdit(booking)} type="button">Modifier</button>
-                    )}
-                    <button className="btn btn-danger-outline" onClick={() => handleCancelBooking(booking)} disabled={cancellingId === booking.id} type="button">
-                      {cancellingId === booking.id ? 'Annulation…' : 'Annuler'}
-                    </button>
                   </div>
                 </div>
-                {editingBooking?.id === booking.id && (
-                  <div className="edit-row">
-                    <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-                    <button className="btn btn-primary" onClick={saveEdit} disabled={savingEdit} type="button">
-                      {savingEdit ? 'Enregistrement…' : 'Enregistrer'}
+
+                <div className="approval-meta">
+                  <span><b>Demandeur :</b> {b.username}</span>
+                  {b.documentName && (
+                    <button className="btn btn-sm btn-primary" type="button" onClick={() => handleViewDocument(b)}>
+                      Voir le document ({b.documentName})
                     </button>
-                    <button className="btn btn-ghost" onClick={cancelEdit} type="button">Annuler</button>
+                  )}
+                </div>
+
+                {(b.chefComment || b.doyenComment) && (
+                  <div className="approval-comments">
+                    {b.chefComment && (
+                      <div className="approval-comment-item">
+                        <span className="approval-comment-actor">Chef de filière :</span> {b.chefComment}
+                      </div>
+                    )}
+                    {b.doyenComment && (
+                      <div className="approval-comment-item">
+                        <span className="approval-comment-actor">Doyen :</span> {b.doyenComment}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {editingId === b.id && (
+                  <div className="edit-row">
+                    <input type="date" value={editState.date} onChange={(e) => setEditState((s) => ({ ...s, date: e.target.value }))} />
+                    <select value={editState.creneau} onChange={(e) => setEditState((s) => ({ ...s, creneau: e.target.value }))}>
+                      {CRENEAUX.map((c) => <option value={c} key={c}>{c}</option>)}
+                    </select>
+                    <input type="text" value={editState.motif} onChange={(e) => setEditState((s) => ({ ...s, motif: e.target.value }))} placeholder="Motif" />
+                    <button className="btn btn-primary btn-sm" type="button" onClick={saveEdit}>Enregistrer</button>
+                    <button className="btn btn-ghost btn-sm" type="button" onClick={cancelEdit}>Annuler</button>
+                  </div>
+                )}
+
+                {b.history && b.history.length > 0 && (
+                  <div className="history-list">
+                    {b.history.map((h, i) => (
+                      <div className="history-item" key={i}>
+                        <span className={`history-dot ${historyClass(h.status)}`} />
+                        <div className="history-body">
+                          <div className="history-title">
+                            {h.comment || h.status} {h.actor && <span>({h.actor})</span>}
+                          </div>
+                          {h.comment && h.comment !== h.status && (
+                            <div className="history-comment">{formatDate(h.timestamp)}</div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>

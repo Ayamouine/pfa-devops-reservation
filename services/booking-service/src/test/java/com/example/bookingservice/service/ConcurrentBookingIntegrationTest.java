@@ -38,7 +38,7 @@ public class ConcurrentBookingIntegrationTest {
         Callable<Boolean> task = () -> {
             try {
                 Booking b = new Booking(null, resource, date, null, "user1");
-                bookingService.createBooking(b);
+                bookingService.createBooking(b, "user1", "PROF");
                 return true;
             } catch (Exception e) {
                 return false;

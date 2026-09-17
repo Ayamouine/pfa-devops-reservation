@@ -11,14 +11,14 @@ export default function CalendarPage() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await getResources();
+        const r = await getResources(token);
         setResources(r);
         if (r.length) setSelected(r[0].name || r[0].id);
       } catch (e) {
         // ignore
       }
     })();
-  }, []);
+  }, [token]);
 
   const handleBook = async (resource, date) => {
     const payload = { resource, date, username: currentUser.username };

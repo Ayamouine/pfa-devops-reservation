@@ -45,6 +45,10 @@ services:
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
       JWT_SECRET: ${JWT_SECRET:-my-super-secret-key-for-pfa-application-2026}
+      ADMIN_REGISTRATION_CODE: ${ADMIN_REGISTRATION_CODE:-pfa-admin-2026}
+      PROF_REGISTRATION_CODE: ${PROF_REGISTRATION_CODE:-pfa-prof-2026}
+      CHEF_REGISTRATION_CODE: ${CHEF_REGISTRATION_CODE:-pfa-chef-2026}
+      DOYEN_REGISTRATION_CODE: ${DOYEN_REGISTRATION_CODE:-pfa-doyen-2026}
     depends_on:
       mysql:
         condition: service_healthy
@@ -67,6 +71,7 @@ services:
       SPRING_DATASOURCE_DRIVER_CLASS_NAME: com.mysql.cj.jdbc.Driver
       SPRING_JPA_PROPERTIES_HIBERNATE_DIALECT: org.hibernate.dialect.MySQLDialect
       NOTIFICATION_SERVICE_URL: http://notification-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8084
     depends_on:
       mysql:
         condition: service_healthy
