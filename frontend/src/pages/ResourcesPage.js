@@ -1,58 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BOOKING_URL, authHeaders } from '../api';
+import { getResources } from '../api';
 import { useAuth } from '../AuthContext';
 
 export default function ResourcesPage() {
-  const { token, currentUser } = useAuth();
-  const [allBookings, setAllBookings] = useState([]);
+  const { token } = useAuth();
+  const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${BOOKING_URL}/bookings/mine?username=${encodeURIComponent(currentUser.username)}`, { headers: authHeaders(token) })
-      .then((res) => res.json())
-      .then(setAllBookings)
-      .catch(() => setAllBookings([]))
+    getResources(token)
+      .then((list) => setResources(Array.isArray(list) ? list : []))
+      .catch(() => setResources([]))
       .finally(() => setLoading(false));
-  }, [token, currentUser]);
-
-  const resources = {};
-  allBookings.forEach((b) => {
-    if (!b.resource) return;
-    if (!resources[b.resource]) resources[b.resource] = [];
-    if ((b.status || '').toLowerCase() !== 'cancelled') resources[b.resource].push(b.date);
-  });
-  const resourceNames = Object.keys(resources).sort();
+  }, [token]);
 
   return (
     <div className="page">
       <header className="page-header">
         <h1>Ressources</h1>
-        <p>Aperçu des ressources déjà réservées et de leurs dates occupées.</p>
+        <p>Salles, événements et créneaux disponibles à la réservation.</p>
       </header>
 
       <section className="card">
         {loading && <p className="empty-state">Chargement…</p>}
-        {!loading && resourceNames.length === 0 && (
-          <p className="empty-state">
-            Aucune ressource réservée pour le moment. <Link to="/reservations">Créez la première réservation</Link>.
-          </p>
+        {!loading && resources.length === 0 && (
+          <p className="empty-state">Aucune ressource disponible pour le moment.</p>
         )}
-        {!loading && resourceNames.length > 0 && (
+        {!loading && resources.length > 0 && (
           <div className="resource-list">
-            {resourceNames.map((name) => (
-              <div className="resource-card" key={name}>
+            {resources.map((r) => (
+              <div className="resource-card" key={r.id || r.name}>
                 <div className="resource-card-header">
                   <span className="ticket-resource">
-                    <Link to={`/ressources/${encodeURIComponent(name)}`}>{name}</Link>
+                    <Link to={`/ressources/${encodeURIComponent(r.name)}`}>{r.name}</Link>
                   </span>
-                  <span className="stat-label">{resources[name].length} réservation(s)</span>
+                  <span className="stat-label">{r.category || ''}</span>
                 </div>
                 <p className="availability-hint">
-                  {resources[name].length > 0
-                    ? `Occupée le : ${resources[name].join(', ')}`
-                    : 'Aucune date occupée actuellement.'}
+                  {r.location ? `Lieu : ${r.location}` : ''} {r.capacity ? `— Capacité : ${r.capacity}` : ''}
                 </p>
+                <a href={`/ressources/${encodeURIComponent(r.name)}`}>Voir le détail</a>
               </div>
             ))}
           </div>

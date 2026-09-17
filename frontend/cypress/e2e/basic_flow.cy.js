@@ -11,9 +11,10 @@ describe('Basic reservation flow (API)', () => {
       cy.request('POST', `${authUrl}/auth/login`, { username, password }).then((loginRes) => {
         expect(loginRes.body).to.have.property('token');
         const token = loginRes.body.token;
+        const authHeaders = { Authorization: `Bearer ${token}` };
 
         // Get resources
-        cy.request('GET', `${bookingUrl}/resources`).then((res) => {
+        cy.request({ method: 'GET', url: `${bookingUrl}/resources`, headers: authHeaders }).then((res) => {
           expect(res.status).to.eq(200);
           const list = res.body || [];
           if (list.length === 0) {
@@ -26,13 +27,17 @@ describe('Basic reservation flow (API)', () => {
           const day = date.toISOString().slice(0, 10);
 
           // Check availability
-          cy.request('GET', `${bookingUrl}/bookings/availability?resource=${encodeURIComponent(r.name)}&date=${day}`).then((avail) => {
+          cy.request({
+            method: 'GET',
+            url: `${bookingUrl}/bookings/availability?resource=${encodeURIComponent(r.name)}&date=${day}`,
+            headers: authHeaders,
+          }).then((avail) => {
             expect(avail.status).to.eq(200);
             // Try create booking (may fail if occupied)
             cy.request({
               method: 'POST',
               url: `${bookingUrl}/bookings`,
-              headers: { Authorization: `Bearer ${token}` },
+              headers: authHeaders,
               body: { resource: r.name, date: day, username },
               failOnStatusCode: false,
             }).then((createRes) => {

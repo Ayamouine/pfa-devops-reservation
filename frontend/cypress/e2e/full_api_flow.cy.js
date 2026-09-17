@@ -17,7 +17,7 @@ describe('Full API reservation flow', () => {
       const token = loginRes.body.token;
 
       // Get resources
-      cy.request('GET', `${bookingUrl}/resources`).then((res) => {
+      cy.request({ method: 'GET', url: `${bookingUrl}/resources`, headers: { Authorization: `Bearer ${token}` } }).then((res) => {
         expect(res.status).to.eq(200);
         const list = res.body || [];
         if (list.length === 0) {

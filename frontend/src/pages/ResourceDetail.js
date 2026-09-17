@@ -10,13 +10,13 @@ export default function ResourceDetail() {
   const { token, currentUser } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    getResources().then((list) => {
+useEffect(() => {
+    getResources(token).then((list) => {
       const found = list.find((r) => r.name === decodeURIComponent(id));
       setResource(found || { name: decodeURIComponent(id) });
     });
-  }, [id]);
-
+  }, [id, token]);
+  
   const handleBook = async (resourceName, date) => {
     if (!token) return navigate('/login');
     try {

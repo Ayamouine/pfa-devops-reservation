@@ -83,8 +83,8 @@ export async function verifyAccount(token) {
 }
 
 // Resources
-export async function getResources() {
-  const res = await fetch(`${BOOKING_URL}/resources`);
+export async function getResources(token) {
+  const res = await fetch(`${BOOKING_URL}/resources`, { headers: authHeaders(token) });
   return res.json();
 }
 
