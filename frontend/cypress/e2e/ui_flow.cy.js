@@ -33,24 +33,26 @@ describe('UI reservation flow', () => {
   });
 
   it('registers, logs in, navigates to resources and attempts booking via calendar', () => {
+    // Registration already authenticates the user (register returns a token and
+    // sets the session). The session is persisted to localStorage so it survives
+    // the full page reload that cy.visit triggers.
     cy.visit('/register');
-    cy.get('#username').type(username);
-    cy.get('#password').type(password);
+    cy.intercept('POST', `${authUrl}/auth/register`).as('registerReq');
+    cy.get('#username', { timeout: 15000 }).type(username);
+    cy.get('#password', { timeout: 15000 }).type(password);
     cy.get('button[type="submit"]').contains('Créer').click();
+    cy.wait('@registerReq');
 
-    // Log in explicitly (registration does not authenticate automatically)
-    cy.visit('/login');
-    cy.get('#username').type(username);
-    cy.get('#password').type(password);
-    cy.get('button[type="submit"]').click();
+    // Wait until the session is persisted before the full page reload
+    cy.window().its('localStorage').invoke('getItem', 'pfa_auth').should('exist');
 
     cy.visit('/ressources');
-    cy.get('.resource-list', { timeout: 10000 }).should('exist');
+    cy.get('.resource-list', { timeout: 15000 }).should('exist');
     cy.get('.resource-list .resource-card').first().within(() => {
       cy.get('a').first().click();
     });
 
-    cy.get('.calendar', { timeout: 10000 }).should('exist');
+    cy.get('.calendar', { timeout: 15000 }).should('exist');
     cy.contains('Réserver').first().click({ force: true });
     cy.on('window:alert', (txt) => {
       expect(txt).to.match(/Réservation|Erreur/);

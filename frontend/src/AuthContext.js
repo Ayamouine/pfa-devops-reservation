@@ -1,12 +1,44 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { login as apiLogin, register as apiRegister, refreshToken as apiRefresh, forgotPassword as apiForgot, resetPassword as apiReset, verifyAccount as apiVerify } from './api';
 
 const AuthContext = createContext(null);
 
+const AUTH_STORAGE_KEY = 'pfa_auth';
+
+function loadStoredAuth() {
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+    if (!raw) return { token: null, refreshToken: null, currentUser: null };
+    const data = JSON.parse(raw);
+    return {
+      token: data.token || null,
+      refreshToken: data.refreshToken || null,
+      currentUser: data.currentUser ? { username: data.currentUser.username, role: data.currentUser.role } : null,
+    };
+  } catch {
+    return { token: null, refreshToken: null, currentUser: null };
+  }
+}
+
+function saveStoredAuth(token, refreshToken, currentUser) {
+  try {
+    if (!token || !currentUser) {
+      localStorage.removeItem(AUTH_STORAGE_KEY);
+      return;
+    }
+    localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, refreshToken, currentUser }));
+  } catch {}
+}
+
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(null);
-  const [refreshToken, setRefreshToken] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const initial = loadStoredAuth();
+  const [token, setToken] = useState(initial.token);
+  const [refreshToken, setRefreshToken] = useState(initial.refreshToken);
+  const [currentUser, setCurrentUser] = useState(initial.currentUser);
+
+  useEffect(() => {
+    saveStoredAuth(token, refreshToken, currentUser);
+  }, [token, refreshToken, currentUser]);
   const [toasts, setToasts] = useState([]);
   const [confirmDialog, setConfirmDialog] = useState(null);
 
