@@ -1,6 +1,14 @@
 services:
   frontend:
     command: sh -c "npm run build && npx -y serve -s build -l 3000"
+    environment:
+      # Override the localhost URLs from docker-compose.yml: inside the Cypress
+      # container "localhost" is unreachable, so the bundle must point at the
+      # internal service names at build time.
+      REACT_APP_AUTH_URL: http://auth-service:8081
+      REACT_APP_BOOKING_URL: http://booking-service:8082
+      REACT_APP_NOTIFICATION_URL: http://notification-service:8083
+      REACT_APP_PAYMENT_URL: http://payment-service:8084
     healthcheck:
       test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:3000/"]
       interval: 5s

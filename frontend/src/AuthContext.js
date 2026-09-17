@@ -68,6 +68,7 @@ export function AuthProvider({ children }) {
   const value = {
     token,
     currentUser,
+    setCurrentUser,
     isAdmin: currentUser?.role === 'ADMIN',
     login,
     register,
