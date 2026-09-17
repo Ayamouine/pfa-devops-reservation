@@ -12,7 +12,7 @@ import com.example.notificationservice.entity.NotificationPreference;
 import com.example.notificationservice.repository.NotificationPreferenceRepository;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3002"})
+@CrossOrigin(origins = {"http://localhost:3001", "http://localhost:3002", "http://frontend:3000"})
 @RequestMapping("/notifications/preferences")
 public class NotificationPreferenceController {
 

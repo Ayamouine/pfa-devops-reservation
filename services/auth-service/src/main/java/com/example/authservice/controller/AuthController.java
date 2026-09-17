@@ -16,7 +16,7 @@ import com.example.authservice.model.RegisterRequest;
 import com.example.authservice.service.AuthService;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:3002"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://frontend:3000"})
 @RequestMapping("/auth")
 public class AuthController {
 

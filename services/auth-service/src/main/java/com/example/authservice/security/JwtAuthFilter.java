@@ -33,7 +33,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         boolean isPreflight = "OPTIONS".equalsIgnoreCase(method);
-        boolean isPublic = path.endsWith("/health") || path.endsWith("/login") || path.endsWith("/register");
+        boolean isPublic = path.endsWith("/health") || path.endsWith("/login") || path.endsWith("/register")
+        || path.endsWith("/forgot") || path.endsWith("/reset") || path.endsWith("/verify") || path.endsWith("/refresh");
 
         if (isPreflight || isPublic) {
             filterChain.doFilter(request, response);

@@ -15,7 +15,7 @@ import com.example.paymentservice.model.Payment;
 import com.example.paymentservice.service.PaymentService;
 
 @RestController
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:3002"})
+@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001", "http://localhost:3002", "http://frontend:3000"})
 @RequestMapping("/payments")
 public class PaymentController {
 
