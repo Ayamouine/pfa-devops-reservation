@@ -11,6 +11,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.bookingservice.security.ServiceTokenProvider;
+
 @Service
 public class PaymentClient {
 
@@ -18,11 +20,14 @@ public class PaymentClient {
 
     private final RestTemplate restTemplate;
     private final String paymentBaseUrl;
+    private final ServiceTokenProvider serviceTokenProvider;
 
     public PaymentClient(RestTemplate restTemplate,
-                         @Value("${payment.service.url:http://localhost:8084}") String paymentBaseUrl) {
+                         @Value("${payment.service.url:http://localhost:8084}") String paymentBaseUrl,
+                         ServiceTokenProvider serviceTokenProvider) {
         this.restTemplate = restTemplate;
         this.paymentBaseUrl = paymentBaseUrl;
+        this.serviceTokenProvider = serviceTokenProvider;
     }
 
     public boolean processSimulatedPayment(Long bookingId, String username, double amount) {
@@ -33,6 +38,7 @@ public class PaymentClient {
                     "amount", amount);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.setBearerAuth(serviceTokenProvider.token());
             HttpEntity<Map<String, Object>> request = new HttpEntity<>(payload, headers);
             restTemplate.postForObject(paymentBaseUrl + "/payments", request, Map.class);
             return true;

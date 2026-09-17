@@ -12,6 +12,8 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import com.example.bookingservice.security.ServiceTokenProvider;
+
 @Service
 public class NotificationClient {
 
@@ -19,11 +21,21 @@ public class NotificationClient {
 
     private final RestTemplate restTemplate;
     private final String notificationBaseUrl;
+    private final ServiceTokenProvider serviceTokenProvider;
 
     public NotificationClient(RestTemplate restTemplate,
-                              @Value("${notification.service.url:http://localhost:8083}") String notificationBaseUrl) {
+                              @Value("${notification.service.url:http://localhost:8083}") String notificationBaseUrl,
+                              ServiceTokenProvider serviceTokenProvider) {
         this.restTemplate = restTemplate;
         this.notificationBaseUrl = notificationBaseUrl;
+        this.serviceTokenProvider = serviceTokenProvider;
+    }
+
+    private HttpEntity<Map<String, String>> authorized(Map<String, String> payload) {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.setBearerAuth(serviceTokenProvider.token());
+        return new HttpEntity<>(payload, headers);
     }
 
     public void sendReservationNotification(String username, String resource, String date, String status) {
@@ -33,7 +45,7 @@ public class NotificationClient {
                     "message", "Reservation " + status + " for " + resource + " on " + date,
                     "status", status,
                     "type", "BOOKING_" + status.toUpperCase());
-            restTemplate.postForObject(notificationBaseUrl + "/notifications", payload, Object.class);
+            restTemplate.postForObject(notificationBaseUrl + "/notifications", authorized(payload), Object.class);
         } catch (Exception e) {
             log.warn("Notification service unreachable: {}", e.getMessage());
         }
@@ -53,10 +65,7 @@ public class NotificationClient {
             if (link != null && !link.isBlank()) {
                 payload.put("link", link);
             }
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, String>> request = new HttpEntity<>(payload, headers);
-            restTemplate.postForObject(notificationBaseUrl + "/notifications", request, Object.class);
+            restTemplate.postForObject(notificationBaseUrl + "/notifications", authorized(payload), Object.class);
         } catch (Exception e) {
             log.warn("Notification service unreachable (type={}, target={}): {}", type, target, e.getMessage());
         }

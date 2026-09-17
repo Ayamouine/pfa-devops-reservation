@@ -34,6 +34,7 @@ services:
       CYPRESS_BASE_URL: http://frontend:3000
       CYPRESS_AUTH_URL: http://auth-service:8081
       CYPRESS_BOOKING_URL: http://booking-service:8082
+      CYPRESS_NOTIFICATION_URL: http://notification-service:8083
       CYPRESS_PAYMENT_URL: http://payment-service:8084
     volumes:
       - ./frontend:/e2e:cached
