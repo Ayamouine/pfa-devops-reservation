@@ -8,6 +8,7 @@ export const ROLES = [
   { value: 'PROF', label: 'Professeur' },
   { value: 'CHEF_FILIERE', label: 'Chef de filière' },
   { value: 'DOYEN', label: 'Doyen' },
+  { value: 'CLUB', label: 'Club' },
   { value: 'ADMIN', label: 'Administrateur' },
 ];
 
@@ -16,6 +17,7 @@ export const ROLE_LABELS = {
   PROF: 'Professeur',
   CHEF_FILIERE: 'Chef de filière',
   DOYEN: 'Doyen',
+  CLUB: 'Club',
   ADMIN: 'Administrateur',
   USER: 'Utilisateur',
 };
@@ -25,19 +27,90 @@ export const REGISTRATION_CODES = {
   PROF: 'pfa-prof-2026',
   CHEF_FILIERE: 'pfa-chef-2026',
   DOYEN: 'pfa-doyen-2026',
+  CLUB: 'pfa-club-2026',
   ADMIN: 'pfa-admin-2026',
 };
 
-export const FILIERES = [
-  'Informatique',
-  'Mathématiques et Applications',
-  'Physique et Applications',
-  'Chimie',
-  'Sciences et Techniques de l\'Ingénieur',
-  'Biologie et Santé',
-  'Génie Civil et Environnement',
-  'Agroalimentaire et Qualité',
+export const CLUBS = ['CLIC', 'CTDE', 'BAC', 'BTEC', 'FIRE', 'CODE'];
+
+export const ROOM_TYPES = [
+  { value: 'AMPHI', label: 'Amphithéâtre' },
+  { value: 'TD', label: 'Salle de TD' },
+  { value: 'TP', label: 'Salle de TP' },
+  { value: 'LABO', label: 'Laboratoire informatique' },
 ];
+
+export const ROOM_TYPE_LABELS = {
+  AMPHI: 'Amphithéâtre',
+  TD: 'Salle de TD',
+  TP: 'Salle de TP',
+  LABO: 'Laboratoire informatique',
+  SALLE: 'Salle',
+  AUTRE: 'Autre',
+};
+
+export const EQUIPMENTS = [
+  'Projecteur',
+  'Tableau blanc',
+  'Climatisation',
+  'Ordinateurs',
+  'Prises réseau',
+  'Audio',
+  'Visio',
+];
+
+export const SLOTS = ['08:30-10:30', '10:30-12:30', '14:00-16:00', '16:00-18:00'];
+
+export const FILIERES_GROUPES = [
+  {
+    groupe: 'Tronc Commun',
+    filieres: ['GI/MSD', 'GI', 'MSD', 'GESE/GMSI', 'GESE', 'GMSI', 'GC', 'GB'],
+  },
+  {
+    groupe: 'Licence LST',
+    filieres: [
+      'MSD',
+      'GI',
+      'GDIA',
+      'SITD',
+      'SIOC',
+      'GESA',
+      'EEA',
+      'MECATRONIQUE',
+      'GMP',
+      'GC',
+      'GPTACQ',
+      'GCED',
+      'ADD',
+      'SB',
+      'TA',
+    ],
+  },
+  {
+    groupe: 'Master MST',
+    filieres: [
+      'AGQSHE',
+      'ISM',
+      'IMI',
+      'ILCS',
+      'MTE',
+      'MSD',
+      'SICRAT',
+      'Mecat & AU',
+      'ATSII',
+      'MQAGD',
+      'ESED',
+      'GCBPC',
+      'RSI',
+    ],
+  },
+  {
+    groupe: 'Cycle Ingénieur',
+    filieres: ['GI', 'IBIM', 'ICP', 'ISESE', 'PIC'],
+  },
+];
+
+export const FILIERES = Array.from(new Set(FILIERES_GROUPES.flatMap((g) => g.filieres)));
 
 export function authHeaders(token, extra = {}) {
   return {
@@ -73,11 +146,11 @@ export async function parseError(res) {
 }
 
 // ---------------- AUTH ----------------
-export async function login(username, password) {
+export async function login(email, password) {
   const res = await fetch(`${AUTH_URL}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ email, password }),
   });
   const data = await parseError(res);
   return data;
@@ -103,11 +176,11 @@ export async function refreshToken(refreshToken) {
   return data;
 }
 
-export async function forgotPassword(username) {
+export async function forgotPassword(email) {
   const res = await fetch(`${AUTH_URL}/auth/forgot`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username }),
+    body: JSON.stringify({ email }),
   });
   const data = await parseError(res);
   return data;
@@ -188,6 +261,14 @@ export async function getResource(token, id) {
   return list.find((r) => String(r.id) === String(id)) || null;
 }
 
+export async function getOccupiedResources(token, date) {
+  const res = await fetch(`${BOOKING_URL}/bookings/availability/day?date=${encodeURIComponent(date)}`, {
+    headers: authHeaders(token),
+  });
+  const data = await parseError(res);
+  return Array.isArray(data?.occupied) ? data.occupied : [];
+}
+
 export async function createResource(token, payload) {
   const res = await fetch(`${BOOKING_URL}/resources`, {
     method: 'POST',
@@ -247,6 +328,16 @@ export async function getAllBookings(token) {
 
 export async function getApprovals(token) {
   const res = await fetch(`${BOOKING_URL}/bookings/approvals`, { headers: authHeaders(token) });
+  return parseError(res);
+}
+
+export async function getCalendarBookings(token, { from, to, resource, filiere } = {}) {
+  const url = new URL(`${BOOKING_URL}/bookings/calendar`);
+  url.searchParams.set('from', from);
+  url.searchParams.set('to', to);
+  if (resource) url.searchParams.set('resource', resource);
+  if (filiere) url.searchParams.set('filiere', filiere);
+  const res = await fetch(url.toString(), { headers: authHeaders(token) });
   return parseError(res);
 }
 
@@ -317,6 +408,20 @@ export async function downloadDocument(token, id) {
   const disposition = res.headers.get('Content-Disposition') || '';
   const match = /filename="?([^";]+)"?/.exec(disposition);
   const filename = match ? match[1] : 'document.pdf';
+  const blob = await res.blob();
+  const url = URL.createObjectURL(blob);
+  return { url, filename };
+}
+
+export async function downloadSignedDocument(token, id) {
+  const res = await fetch(`${BOOKING_URL}/bookings/${id}/signed-document`, { headers: authHeaders(token) });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Document signé indisponible');
+  }
+  const disposition = res.headers.get('Content-Disposition') || '';
+  const match = /filename="?([^";]+)"?/.exec(disposition);
+  const filename = match ? match[1] : 'autorisation-evenement.pdf';
   const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   return { url, filename };

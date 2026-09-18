@@ -51,6 +51,21 @@ public class BookingController {
         return Map.of("resource", resource, "date", date, "creneau", creneau == null ? "" : creneau, "available", ok);
     }
 
+    @GetMapping("/calendar")
+    public List<Booking> calendar(@RequestParam String from,
+                                  @RequestParam String to,
+                                  @RequestParam(required = false) String resource,
+                                  @RequestParam(required = false) String filiere) {
+        return bookingService.getCalendarBookings(
+                java.time.LocalDate.parse(from), java.time.LocalDate.parse(to), resource, filiere);
+    }
+
+    @GetMapping("/availability/day")
+    public Map<String, Object> availabilityForDay(@RequestParam String date) {
+        java.time.LocalDate day = java.time.LocalDate.parse(date);
+        return Map.of("date", date, "occupied", bookingService.getOccupiedResources(day));
+    }
+
     @GetMapping("/mine")
     public List<Booking> myBookings(@RequestParam String username) {
         return bookingService.getBookingsForUser(username);
@@ -147,6 +162,20 @@ public class BookingController {
         }
         String name = bookingService.getDocumentName(id).orElse("document.pdf");
         String type = bookingService.getDocumentType(id).orElse("application/pdf");
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
+                .contentType(MediaType.parseMediaType(type))
+                .body(data.get());
+    }
+
+    @GetMapping("/{id}/signed-document")
+    public ResponseEntity<byte[]> downloadSignedDocument(@PathVariable Long id) {
+        Optional<byte[]> data = bookingService.getSignedDocumentData(id);
+        if (data.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        String name = bookingService.getSignedDocumentName(id).orElse("autorisation-evenement.pdf");
+        String type = bookingService.getSignedDocumentType(id).orElse("application/pdf");
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + name + "\"")
                 .contentType(MediaType.parseMediaType(type))

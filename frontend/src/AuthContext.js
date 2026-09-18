@@ -18,10 +18,12 @@ function sanitizeUser(data) {
   return {
     id: data.id,
     username: data.username,
+    email: data.email || '',
     role: data.role,
     firstName: data.firstName || '',
     lastName: data.lastName || '',
     filiere: data.filiere || '',
+    club: data.club || '',
     avatarColor: data.avatarColor || '',
   };
 }
@@ -75,8 +77,8 @@ export function AuthProvider({ children }) {
     setConfirmDialog({ message, onConfirm });
   }, []);
 
-  const login = useCallback(async (username, password) => {
-    const data = await apiLogin(username, password);
+  const login = useCallback(async (email, password) => {
+    const data = await apiLogin(email, password);
     setToken(data.token);
     setRefreshToken(data.refreshToken);
     setCurrentUser(sanitizeUser(data));
@@ -106,8 +108,8 @@ export function AuthProvider({ children }) {
     return data;
   }, [refreshToken]);
 
-  const forgot = useCallback(async (username) => {
-    return apiForgot(username);
+  const forgot = useCallback(async (email) => {
+    return apiForgot(email);
   }, []);
 
   const reset = useCallback(async (token, newPassword) => {
@@ -135,7 +137,8 @@ export function AuthProvider({ children }) {
     isProf: role === 'PROF',
     isChef: role === 'CHEF_FILIERE',
     isDoyen: role === 'DOYEN',
-    canBook: role === 'PROF' || role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN',
+    isClub: role === 'CLUB',
+    canBook: role === 'PROF' || role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN' || role === 'CLUB',
     fullName: currentUser
       ? `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.username
       : '',

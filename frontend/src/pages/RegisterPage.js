@@ -1,29 +1,34 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
-import { FILIERES, REGISTRATION_CODES, ROLE_LABELS } from '../api';
+import { CLUBS, FILIERES_GROUPES, REGISTRATION_CODES, ROLE_LABELS } from '../api';
 
 const ROLES = [
   { value: 'ETUDIANT', label: 'Étudiant' },
   { value: 'PROF', label: 'Professeur' },
   { value: 'CHEF_FILIERE', label: 'Chef de filière' },
   { value: 'DOYEN', label: 'Doyen' },
+  { value: 'CLUB', label: 'Club' },
   { value: 'ADMIN', label: 'Administrateur' },
 ];
 
 const LOGO = 'https://www.fsts.ac.ma/images/fsts_logo.png';
+
+const INSTITUTIONAL_EMAIL = /^[\w.+-]+@uhp\.ac\.ma$/i;
 
 export default function RegisterPage() {
   const { register, showToast } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     username: '',
+    email: '',
     password: '',
     role: 'ETUDIANT',
     adminCode: '',
     firstName: '',
     lastName: '',
     filiere: '',
+    club: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,12 +39,17 @@ export default function RegisterPage() {
     if (name === 'role') setError('');
   };
 
-  const needsCode = ['PROF', 'CHEF_FILIERE', 'DOYEN', 'ADMIN'].includes(form.role);
-  const needsFiliere = ['PROF', 'CHEF_FILIERE', 'DOYEN', 'ETUDIANT'].includes(form.role);
+  const needsCode = ['PROF', 'CHEF_FILIERE', 'DOYEN', 'CLUB', 'ADMIN'].includes(form.role);
+  const needsFiliere = ['PROF', 'CHEF_FILIERE', 'ETUDIANT'].includes(form.role);
+  const needsClub = form.role === 'CLUB';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!INSTITUTIONAL_EMAIL.test(form.email)) {
+      setError("Email institutionnel invalide (format attendu : prenom.nom.fst@uhp.ac.ma)");
+      return;
+    }
     setLoading(true);
     try {
       const data = await register(form);
@@ -76,6 +86,21 @@ export default function RegisterPage() {
             </div>
           </div>
           <div className="field">
+            <label htmlFor="email">Email institutionnel</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              placeholder="prenom.nom.fst@uhp.ac.ma"
+              value={form.email}
+              onChange={handleChange}
+              required
+            />
+            <p className="small-muted" style={{ marginTop: 5 }}>
+              Sert d’identifiant de connexion et de récupération du mot de passe.
+            </p>
+          </div>
+          <div className="field">
             <label htmlFor="username">Nom d’utilisateur</label>
             <input id="username" type="text" name="username" value={form.username} onChange={handleChange} required />
           </div>
@@ -94,7 +119,20 @@ export default function RegisterPage() {
               <label htmlFor="filiere">Filière</label>
               <select id="filiere" name="filiere" value={form.filiere} onChange={handleChange} required={form.role === 'CHEF_FILIERE'}>
                 <option value="">— Choisir la filière —</option>
-                {FILIERES.map((f) => <option value={f} key={f}>{f}</option>)}
+                {FILIERES_GROUPES.map((g) => (
+                  <optgroup key={g.groupe} label={g.groupe}>
+                    {g.filieres.map((f) => <option value={f} key={f}>{f}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+            </div>
+          )}
+          {needsClub && (
+            <div className="field">
+              <label htmlFor="club">Club</label>
+              <select id="club" name="club" value={form.club} onChange={handleChange} required>
+                <option value="">— Choisir le club —</option>
+                {CLUBS.map((c) => <option value={c} key={c}>{c}</option>)}
               </select>
             </div>
           )}

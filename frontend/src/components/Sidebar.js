@@ -50,7 +50,7 @@ export default function Sidebar() {
           Tableau de bord
         </NavLink>
 
-        {(role === 'PROF' || role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN') && (
+        {(role === 'PROF' || role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN' || role === 'CLUB') && (
           <NavLink to="/reservations" className={linkCls}>
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
               <rect x="3" y="4" width="18" height="18" rx="2" />

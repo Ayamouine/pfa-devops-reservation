@@ -1,5 +1,7 @@
 package com.example.bookingservice.service;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.http.HttpStatus;
@@ -46,11 +48,13 @@ public class ResourceService {
     private void applyDto(ResourceEntity entity, ResourceDto dto) {
         entity.setName(dto.getName());
         entity.setCategory(dto.getCategory());
+        entity.setType(dto.getType());
         entity.setCapacity(dto.getCapacity());
         entity.setLocation(dto.getLocation());
         entity.setBuilding(dto.getBuilding());
         entity.setFloor(dto.getFloor());
         entity.setEquipment(dto.getEquipment());
+        entity.setEquipments(dto.getEquipments() == null ? new HashSet<>() : new HashSet<>(dto.getEquipments()));
         entity.setPhoto(dto.getPhoto());
         entity.setPrice(dto.getPrice());
         entity.setActive(true);
@@ -61,11 +65,13 @@ public class ResourceService {
         dto.setId(entity.getId());
         dto.setName(entity.getName());
         dto.setCategory(entity.getCategory());
+        dto.setType(entity.getType());
         dto.setCapacity(entity.getCapacity());
         dto.setLocation(entity.getLocation());
         dto.setBuilding(entity.getBuilding());
         dto.setFloor(entity.getFloor());
         dto.setEquipment(entity.getEquipment());
+        dto.setEquipments(entity.getEquipments() == null ? new ArrayList<>() : new ArrayList<>(entity.getEquipments()));
         dto.setPhoto(entity.getPhoto());
         dto.setPrice(entity.getPrice());
         return dto;

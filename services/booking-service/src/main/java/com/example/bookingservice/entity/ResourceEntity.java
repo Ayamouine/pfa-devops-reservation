@@ -1,10 +1,17 @@
 package com.example.bookingservice.entity;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.Table;
 
 @Entity
@@ -21,6 +28,9 @@ public class ResourceEntity {
     @Column(nullable = false)
     private String category;
 
+    @Column
+    private String type;
+
     @Column(nullable = false)
     private Integer capacity;
 
@@ -35,6 +45,11 @@ public class ResourceEntity {
 
     @Column
     private String equipment;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "resource_equipment", joinColumns = @JoinColumn(name = "resource_id"))
+    @Column(name = "equipment")
+    private Set<String> equipments = new HashSet<>();
 
     @Column
     private String photo;
@@ -64,6 +79,8 @@ public class ResourceEntity {
     public void setName(String name) { this.name = name; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
     public Integer getCapacity() { return capacity; }
     public void setCapacity(Integer capacity) { this.capacity = capacity; }
     public String getLocation() { return location; }
@@ -74,6 +91,8 @@ public class ResourceEntity {
     public void setFloor(String floor) { this.floor = floor; }
     public String getEquipment() { return equipment; }
     public void setEquipment(String equipment) { this.equipment = equipment; }
+    public Set<String> getEquipments() { return equipments; }
+    public void setEquipments(Set<String> equipments) { this.equipments = equipments; }
     public String getPhoto() { return photo; }
     public void setPhoto(String photo) { this.photo = photo; }
     public Double getPrice() { return price; }

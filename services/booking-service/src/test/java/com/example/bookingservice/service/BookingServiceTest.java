@@ -205,4 +205,44 @@ class BookingServiceTest {
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("introuvable");
     }
+
+    @Test
+    void createBooking_clubEvent_isApprovedAndSentDirectlyToDoyen() {
+        Booking request = new Booking(null, "Amphi Central", "2026-09-01", null, "club.clic");
+        request.setCreneau("14:00-16:00");
+        request.setClub("CLIC");
+        request.setBookingType("EVENEMENT");
+        request.setMotif("Hackathon CLIC");
+
+        when(bookingRepository.existsByResourceAndReservationDateAndCreneau(
+                "Amphi Central", LocalDate.parse("2026-09-01"), "14:00-16:00")).thenReturn(false);
+        when(bookingRepository.save(any(BookingEntity.class))).thenAnswer(inv -> savedEntity(inv.getArgument(0)));
+
+        Booking result = bookingService.createBooking(request, "club.clic", "CLUB");
+
+        assertThat(result.getStatus()).isEqualTo("APPROVED");
+        assertThat(result.getBookingType()).isEqualTo("EVENEMENT");
+        assertThat(result.getClub()).isEqualTo("CLIC");
+        verify(notificationClient).sendWorkflowNotification(
+                eq(null), eq("ROLE:DOYEN"), any(), eq("EVENT_PENDING_SIGNATURE"), any());
+    }
+
+    @Test
+    void confirmBooking_event_generatesSignedPdf() {
+        BookingEntity entity = new BookingEntity("Amphi Central", LocalDate.parse("2026-09-01"), "APPROVED", "club.clic");
+        entity.setId(1L);
+        entity.setBookingType("EVENEMENT");
+        entity.setClub("CLIC");
+        entity.setMotif("Hackathon CLIC");
+        when(bookingRepository.findById(1L)).thenReturn(Optional.of(entity));
+        when(bookingRepository.save(any(BookingEntity.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(resourceRepository.findByNameIgnoreCase("Amphi Central")).thenReturn(Optional.empty());
+        when(paymentClient.processSimulatedPayment(any(), any(), anyDouble())).thenReturn(true);
+
+        Booking result = bookingService.confirmBooking(1L, "Signature du doyen", "doyen", "DOYEN");
+
+        assertThat(result.getStatus()).isEqualTo("CONFIRMED");
+        assertThat(result.isHasSignedDocument()).isTrue();
+        assertThat(result.getSignedDocumentName()).contains("autorisation-evenement");
+    }
 }

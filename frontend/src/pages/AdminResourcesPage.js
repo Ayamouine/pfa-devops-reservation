@@ -1,25 +1,31 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { getResources, createResource, updateResource, deleteResource } from '../api';
-
-const CATEGORIES = [
-  { value: 'SALLE', label: 'Salle de cours' },
-  { value: 'TP', label: 'Salle de TP' },
-  { value: 'AMPHI', label: 'Amphithéâtre' },
-  { value: 'REUNION', label: 'Salle de réunion' },
-  { value: 'AUTRE', label: 'Autre' },
-];
+import {
+  getResources,
+  createResource,
+  updateResource,
+  deleteResource,
+  ROOM_TYPES,
+  ROOM_TYPE_LABELS,
+  EQUIPMENTS,
+} from '../api';
 
 const emptyForm = {
   name: '',
-  category: 'SALLE',
-  capacity: 30,
+  type: 'TD',
+  category: 'TD',
+  capacity: 40,
   price: 0,
   building: '',
   floor: '',
   location: '',
-  equipment: '',
-  photo: '',
+  equipments: [],
+};
+
+const equipmentsOf = (r) => {
+  if (Array.isArray(r.equipments) && r.equipments.length > 0) return r.equipments;
+  if (r.equipment) return r.equipment.split(',').map((s) => s.trim()).filter(Boolean);
+  return [];
 };
 
 export default function AdminResourcesPage() {
@@ -41,21 +47,38 @@ export default function AdminResourcesPage() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: name === 'capacity' || name === 'price' ? Number(value) : value });
+    if (name === 'capacity' || name === 'price') {
+      setForm({ ...form, [name]: Number(value) });
+      return;
+    }
+    if (name === 'type') {
+      setForm({ ...form, type: value, category: value });
+      return;
+    }
+    setForm({ ...form, [name]: value });
   };
+
+  const toggleEquipment = (e) =>
+    setForm((prev) => ({
+      ...prev,
+      equipments: prev.equipments.includes(e)
+        ? prev.equipments.filter((x) => x !== e)
+        : [...prev.equipments, e],
+    }));
 
   const startEdit = (r) => {
     setEditingId(r.id);
+    const type = r.type || r.category || 'TD';
     setForm({
       name: r.name,
-      category: r.category,
-      capacity: r.capacity || 30,
+      type,
+      category: type,
+      capacity: r.capacity || 40,
       price: r.price || 0,
       building: r.building || '',
       floor: r.floor || '',
       location: r.location || '',
-      equipment: r.equipment || '',
-      photo: r.photo || '',
+      equipments: equipmentsOf(r),
     });
   };
 
@@ -67,11 +90,16 @@ export default function AdminResourcesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
+    const payload = {
+      ...form,
+      category: form.type,
+      equipment: form.equipments.join(', '),
+    };
     try {
       if (editingId) {
-        await updateResource(token, editingId, form);
+        await updateResource(token, editingId, payload);
       } else {
-        await createResource(token, form);
+        await createResource(token, payload);
       }
       showToast(editingId ? 'Salle modifiée.' : 'Salle créée.', 'success');
       cancelEdit();
@@ -100,7 +128,7 @@ export default function AdminResourcesPage() {
       <header className="page-header">
         <h1 className="page-title">Gestion des salles</h1>
         <p className="page-subtitle">
-          Ajoutez ou mettez à jour les salles de la FST : bâtiment, étage, type, capacité, prix.
+          Ajoutez ou mettez à jour les salles de la FST : bâtiment, étage, type, capacité, équipements, prix.
         </p>
       </header>
 
@@ -113,16 +141,16 @@ export default function AdminResourcesPage() {
               <input id="name" type="text" name="name" value={form.name} onChange={handleChange} required />
             </div>
             <div className="field">
-              <label htmlFor="category">Type</label>
-              <select id="category" name="category" value={form.category} onChange={handleChange}>
-                {CATEGORIES.map((c) => <option value={c.value} key={c.value}>{c.label}</option>)}
+              <label htmlFor="type">Type</label>
+              <select id="type" name="type" value={form.type} onChange={handleChange}>
+                {ROOM_TYPES.map((t) => <option value={t.value} key={t.value}>{t.label}</option>)}
               </select>
             </div>
           </div>
           <div className="form-grid">
             <div className="field">
               <label htmlFor="building">Bâtiment</label>
-              <input id="building" type="text" name="building" placeholder="Ex. Bâtiment A" value={form.building} onChange={handleChange} />
+              <input id="building" type="text" name="building" placeholder="Ex. Bloc A" value={form.building} onChange={handleChange} />
             </div>
             <div className="field">
               <label htmlFor="floor">Étage / local</label>
@@ -140,17 +168,26 @@ export default function AdminResourcesPage() {
             </div>
             <div className="field">
               <label htmlFor="location">Localisation</label>
-              <input id="location" type="text" name="location" placeholder="Ex. Bâtiment A, Settat" value={form.location} onChange={handleChange} />
+              <input id="location" type="text" name="location" placeholder="Ex. Bloc A, Settat" value={form.location} onChange={handleChange} />
             </div>
           </div>
-          <div className="form-grid">
-            <div className="field">
-              <label htmlFor="equipment">Équipements</label>
-              <input id="equipment" type="text" name="equipment" placeholder="Ex. Vidéoprojecteur, tableau interactif" value={form.equipment} onChange={handleChange} />
-            </div>
-            <div className="field">
-              <label htmlFor="photo">URL photo</label>
-              <input id="photo" type="text" name="photo" placeholder="https://…" value={form.photo} onChange={handleChange} />
+          <div className="field">
+            <label>Équipements</label>
+            <div className="resource-meta" style={{ marginBottom: 0 }}>
+              {EQUIPMENTS.map((e) => {
+                const active = form.equipments.includes(e);
+                return (
+                  <button
+                    type="button"
+                    key={e}
+                    className="meta-chip"
+                    onClick={() => toggleEquipment(e)}
+                    style={active ? { background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' } : undefined}
+                  >
+                    {e}
+                  </button>
+                );
+              })}
             </div>
           </div>
           <button type="submit" className="btn btn-accent btn-block" disabled={saving}>
@@ -170,23 +207,29 @@ export default function AdminResourcesPage() {
         {!loading && resources.length === 0 && <p className="empty-state">Aucune salle pour le moment.</p>}
         {!loading && resources.length > 0 && (
           <div className="ticket-list">
-            {resources.map((r) => (
-              <div className="ticket" key={r.id}>
-                <div className={`ticket-stub ${r.price ? 'status-confirmed' : 'status-pending'}`} />
-                <div className="ticket-body">
-                  <div className="ticket-main">
-                    <span className="ticket-resource">{r.name}</span>
-                    <span className="ticket-meta">
-                      {r.building || '—'}{r.floor ? ` · ${r.floor}` : ''} · capacité {r.capacity} · {r.price} MAD
-                    </span>
-                  </div>
-                  <div className="ticket-right">
-                    <button className="btn btn-ghost" onClick={() => startEdit(r)} type="button">Modifier</button>
-                    <button className="btn btn-danger-outline" onClick={() => handleDelete(r)} type="button">Supprimer</button>
+            {resources.map((r) => {
+              const eqs = equipmentsOf(r);
+              return (
+                <div className="ticket" key={r.id}>
+                  <div className={`ticket-stub ${r.price ? 'status-confirmed' : 'status-pending'}`} />
+                  <div className="ticket-body">
+                    <div className="ticket-main">
+                      <span className="ticket-resource">
+                        {r.name} <span className="chip">{ROOM_TYPE_LABELS[r.type || r.category] || r.type || r.category}</span>
+                      </span>
+                      <span className="ticket-meta">
+                        {r.building || '—'}{r.floor ? ` · ${r.floor}` : ''} · capacité {r.capacity} · {r.price} MAD
+                        {eqs.length > 0 ? ` · ${eqs.join(', ')}` : ''}
+                      </span>
+                    </div>
+                    <div className="ticket-right">
+                      <button className="btn btn-ghost" onClick={() => startEdit(r)} type="button">Modifier</button>
+                      <button className="btn btn-danger-outline" onClick={() => handleDelete(r)} type="button">Supprimer</button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

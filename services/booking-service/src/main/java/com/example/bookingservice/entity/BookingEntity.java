@@ -48,6 +48,22 @@ public class BookingEntity {
     @Column
     private String filiere;
 
+    @Column(name = "booking_type")
+    private String bookingType = "RESERVATION";
+
+    @Column
+    private String club;
+
+    @Column(name = "signed_document_name")
+    private String signedDocumentName;
+
+    @Column(name = "signed_document_type")
+    private String signedDocumentType;
+
+    @Lob
+    @Column(name = "signed_document_data", columnDefinition = "LONGBLOB")
+    private byte[] signedDocumentData;
+
     @Column(name = "document_name")
     private String documentName;
 
@@ -102,6 +118,16 @@ public class BookingEntity {
     public void setMotif(String motif) { this.motif = motif; }
     public String getFiliere() { return filiere; }
     public void setFiliere(String filiere) { this.filiere = filiere; }
+    public String getBookingType() { return bookingType; }
+    public void setBookingType(String bookingType) { this.bookingType = bookingType; }
+    public String getClub() { return club; }
+    public void setClub(String club) { this.club = club; }
+    public String getSignedDocumentName() { return signedDocumentName; }
+    public void setSignedDocumentName(String signedDocumentName) { this.signedDocumentName = signedDocumentName; }
+    public String getSignedDocumentType() { return signedDocumentType; }
+    public void setSignedDocumentType(String signedDocumentType) { this.signedDocumentType = signedDocumentType; }
+    public byte[] getSignedDocumentData() { return signedDocumentData; }
+    public void setSignedDocumentData(byte[] signedDocumentData) { this.signedDocumentData = signedDocumentData; }
     public String getDocumentName() { return documentName; }
     public void setDocumentName(String documentName) { this.documentName = documentName; }
     public String getDocumentType() { return documentType; }

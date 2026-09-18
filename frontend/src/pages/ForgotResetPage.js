@@ -4,14 +4,14 @@ import { useAuth } from '../AuthContext';
 export default function ForgotResetPage() {
   const { forgot, reset, verify, showToast } = useAuth();
   const [mode, setMode] = useState('forgot'); // forgot | reset | verify
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
   const handleForgot = async (e) => {
     e.preventDefault();
     try {
-      const res = await forgot(username);
+      const res = await forgot(email);
       showToast('Token de réinitialisation généré (demo).', 'success');
       setToken(res.resetToken || res.resetToken);
       setMode('reset');
@@ -26,7 +26,7 @@ export default function ForgotResetPage() {
       await reset(token, newPassword);
       showToast('Mot de passe réinitialisé.', 'success');
       setMode('forgot');
-      setUsername(''); setToken(''); setNewPassword('');
+      setEmail(''); setToken(''); setNewPassword('');
     } catch (err) {
       showToast(err.message || 'Erreur', 'error');
     }
@@ -52,8 +52,14 @@ export default function ForgotResetPage() {
         {mode === 'forgot' && (
           <form onSubmit={handleForgot}>
             <div className="field">
-              <label>Nom d'utilisateur</label>
-              <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+              <label>Email institutionnel</label>
+              <input
+                type="email"
+                placeholder="prenom.nom.fst@uhp.ac.ma"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
             </div>
             <button className="btn btn-primary">Demander réinitialisation</button>
           </form>

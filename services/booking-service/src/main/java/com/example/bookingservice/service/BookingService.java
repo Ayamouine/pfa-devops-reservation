@@ -73,6 +73,25 @@ public class BookingService {
         return !bookingRepository.existsByResourceAndReservationDate(resource, date);
     }
 
+    public List<Booking> getCalendarBookings(LocalDate from, LocalDate to, String resource, String filiere) {
+        return bookingRepository.findByReservationDateBetween(from, to).stream()
+                .filter(b -> resource == null || resource.isBlank() || resource.equalsIgnoreCase(b.getResource()))
+                .filter(b -> filiere == null || filiere.isBlank() || filiere.equalsIgnoreCase(b.getFiliere()))
+                .map(this::toModel)
+                .toList();
+    }
+
+    public List<String> getOccupiedResources(LocalDate date) {
+        return bookingRepository.findByReservationDate(date).stream()
+                .filter(b -> STATUS_PENDING.equalsIgnoreCase(b.getStatus())
+                        || STATUS_APPROVED.equalsIgnoreCase(b.getStatus())
+                        || STATUS_CONFIRMED.equalsIgnoreCase(b.getStatus()))
+                .map(BookingEntity::getResource)
+                .filter(r -> r != null && !r.isBlank())
+                .distinct()
+                .toList();
+    }
+
     public boolean isAvailable(String resource, LocalDate date, String creneau) {
         return !bookingRepository.existsByResourceAndReservationDateAndCreneau(resource, date, creneau);
     }
@@ -98,23 +117,38 @@ public class BookingService {
                 ? requester
                 : booking.getUsername();
 
-        BookingEntity entity = new BookingEntity(booking.getResource(), reservationDate, STATUS_PENDING, username);
+        boolean isEvent = "CLUB".equalsIgnoreCase(requesterRole)
+                || "EVENEMENT".equalsIgnoreCase(booking.getBookingType());
+        String bookingType = isEvent ? "EVENEMENT" : "RESERVATION";
+        String initialStatus = isEvent ? STATUS_APPROVED : STATUS_PENDING;
+
+        BookingEntity entity = new BookingEntity(booking.getResource(), reservationDate, initialStatus, username);
         entity.setCreneau(creneau);
         entity.setMotif(booking.getMotif());
         entity.setFiliere(booking.getFiliere());
+        entity.setBookingType(bookingType);
+        entity.setClub(booking.getClub());
         entity.setCreatedAt(LocalDateTime.now());
         entity.setUpdatedAt(LocalDateTime.now());
-        entity.addHistory(STATUS_PENDING, requester, "Demande de réservation créée");
+        entity.addHistory(initialStatus, requester,
+                isEvent ? "Demande d'événement créée (validation doyen directe)" : "Demande de réservation créée");
 
         BookingEntity saved = bookingRepository.save(entity);
 
-        String link = "/reservations";
         notificationClient.sendWorkflowNotification(
                 saved.getUsername(), null,
-                "Demande de réservation #" + saved.getId() + " créée pour " + saved.getResource()
+                "Demande #" + saved.getId() + " créée pour " + saved.getResource()
                         + " le " + saved.getReservationDate() + " (" + creneau + ")",
-                "BOOKING_CREATED", link);
-        if (saved.getFiliere() != null && !saved.getFiliere().isBlank()) {
+                "BOOKING_CREATED", "/reservations");
+
+        if (isEvent) {
+            notificationClient.sendWorkflowNotification(
+                    null, "ROLE:DOYEN",
+                    "Demande d'événement #" + saved.getId() + " du club " + saved.getClub()
+                            + " (" + saved.getResource() + ", " + saved.getReservationDate() + " " + creneau
+                            + ") en attente de signature",
+                    "EVENT_PENDING_SIGNATURE", "/validations");
+        } else if (saved.getFiliere() != null && !saved.getFiliere().isBlank()) {
             notificationClient.sendWorkflowNotification(
                     null, "ROLE:CHEF_FILIERE:" + saved.getFiliere(),
                     "Nouvelle demande #" + saved.getId() + " de " + saved.getUsername()
@@ -204,6 +238,24 @@ public class BookingService {
         entity.setDoyenComment(comment);
         entity.setUpdatedAt(LocalDateTime.now());
         entity.addHistory(STATUS_CONFIRMED, actor, "Cachet final apposé" + (comment == null || comment.isBlank() ? "" : " : " + comment));
+
+        if ("EVENEMENT".equalsIgnoreCase(entity.getBookingType())) {
+            byte[] pdf = PdfGenerator.simplePdf("Autorisation d'evenement - FST Settat", List.of(
+                    "Reference : demande #" + entity.getId(),
+                    "Club organisateur : " + (entity.getClub() == null ? "-" : entity.getClub()),
+                    "Salle : " + entity.getResource(),
+                    "Date : " + entity.getReservationDate(),
+                    "Creneau : " + (entity.getCreneau() == null ? "-" : entity.getCreneau()),
+                    "Objet : " + (entity.getMotif() == null ? "-" : entity.getMotif()),
+                    "",
+                    "Le doyen de la FST Settat autorise la tenue de cet evenement.",
+                    "Document genere automatiquement lors de la signature electronique."));
+            entity.setSignedDocumentName("autorisation-evenement-" + entity.getId() + ".pdf");
+            entity.setSignedDocumentType("application/pdf");
+            entity.setSignedDocumentData(pdf);
+            entity.addHistory("SIGNED", actor, "PDF signé et cacheté par le doyen");
+        }
+
         BookingEntity saved = bookingRepository.save(entity);
 
         double amount = resolvePrice(saved.getResource());
@@ -318,6 +370,20 @@ public class BookingService {
         return bookingRepository.findById(id).map(BookingEntity::getDocumentType);
     }
 
+    public java.util.Optional<byte[]> getSignedDocumentData(Long id) {
+        return bookingRepository.findById(id)
+                .filter(b -> b.getSignedDocumentData() != null)
+                .map(BookingEntity::getSignedDocumentData);
+    }
+
+    public java.util.Optional<String> getSignedDocumentName(Long id) {
+        return bookingRepository.findById(id).map(BookingEntity::getSignedDocumentName);
+    }
+
+    public java.util.Optional<String> getSignedDocumentType(Long id) {
+        return bookingRepository.findById(id).map(BookingEntity::getSignedDocumentType);
+    }
+
     private double resolvePrice(String resourceName) {
         return resourceRepository.findByNameIgnoreCase(resourceName)
                 .map(r -> r.getPrice() == null ? 0.0 : r.getPrice())
@@ -340,6 +406,10 @@ public class BookingService {
         b.setCreneau(entity.getCreneau());
         b.setMotif(entity.getMotif());
         b.setFiliere(entity.getFiliere());
+        b.setBookingType(entity.getBookingType());
+        b.setClub(entity.getClub());
+        b.setSignedDocumentName(entity.getSignedDocumentName());
+        b.setHasSignedDocument(entity.getSignedDocumentData() != null && entity.getSignedDocumentData().length > 0);
         b.setDocumentName(entity.getDocumentName());
         b.setHasDocument(entity.getDocumentData() != null && entity.getDocumentData().length > 0);
         b.setChefComment(entity.getChefComment());

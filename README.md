@@ -25,7 +25,8 @@ Elle est prête pour une démonstration locale via Docker Compose et pour un dé
 | `ETUDIANT` | Étudiant | — (aucun) | Non (consultation de l'emploi du temps) |
 | `PROF` | Professeur | `pfa-prof-2026` | Oui |
 | `CHEF_FILIERE` | Chef de filière | `pfa-chef-2026` | Oui + valide les demandes de sa filière |
-| `DOYEN` | Doyen | `pfa-doyen-2026` | Oui + cachet final (déclenche le paiement) |
+| `DOYEN` | Doyen | `pfa-doyen-2026` | Oui + signe/cachet final (déclenche le paiement) |
+| `CLUB` | Club étudiant | `pfa-club-2026` | Oui (événements validés directement par le doyen) |
 | `ADMIN` | Administrateur | `pfa-admin-2026` | Gestion des salles et des utilisateurs |
 
 Le rôle `USER` reste accepté par l'API (compatibilité ascendante).
@@ -34,15 +35,21 @@ Le rôle `USER` reste accepté par l'API (compatibilité ascendante).
 
 Créés automatiquement au premier démarrage si la base est vide (`auth-service`) :
 
-| Identifiant | Mot de passe | Rôle |
-|-------------|--------------|------|
-| `admin` | `admin123` | ADMIN |
-| `doyen` | `doyen123` | DOYEN |
-| `chef` | `chef123` | CHEF_FILIERE (Informatique) |
-| `prof` | `prof123` | PROF (Informatique) |
-| `etudiant` | `etudiant123` | ETUDIANT (Informatique) |
+La connexion se fait désormais avec l'**email institutionnel** (`prenom.nom.fst@uhp.ac.ma`) et le mot de passe.
 
-`booking-service` seed également 13 salles FST et quelques demandes de démonstration.
+| Email | Mot de passe | Rôle |
+|-------|--------------|------|
+| `salma.elidrissi.fst@uhp.ac.ma` | `admin123` | ADMIN |
+| `karim.benali.fst@uhp.ac.ma` | `doyen123` | DOYEN |
+| `nadia.alaoui.fst@uhp.ac.ma` | `chef123` | CHEF_FILIERE (GI) |
+| `youssef.tazi.fst@uhp.ac.ma` | `prof123` | PROF (GI) |
+| `imane.rachidi.fst@uhp.ac.ma` | `etudiant123` | ETUDIANT (GI) |
+
+Clubs étudiants (mot de passe commun `club123`) : `club.clic.fst@uhp.ac.ma`, `club.ctde.fst@uhp.ac.ma`,
+`club.bac.fst@uhp.ac.ma`, `club.btec.fst@uhp.ac.ma`, `club.fire.fst@uhp.ac.ma`, `club.code.fst@uhp.ac.ma`.
+L'inscription d'un compte `CLUB` exige le code `pfa-club-2026` et le nom du club.
+
+`booking-service` seed également les salles réelles de la FST (amphis, blocs A-D, cycle ingénieur, Amphi Central) et quelques demandes de démonstration.
 
 ## Démarrage local (Docker Compose)
 
@@ -68,6 +75,10 @@ Accès :
 3. Le **doyen** appose le cachet final → statut `CONFIRMED` + **paiement simulé automatique**.
 4. À tout moment, le demandeur peut **modifier** (retour en `PENDING`) ou **annuler** sa demande.
 
+**Cas particulier — événement de club** : une demande créée par un compte `CLUB` (`bookingType=EVENEMENT`)
+passe directement en `APPROVED` et est notifiée au doyen. À la signature du doyen, un **PDF d'autorisation
+signé** est généré et téléchargeable par le club (`GET /bookings/{id}/signed-document`).
+
 Statuts : `PENDING`, `APPROVED`, `REJECTED`, `CONFIRMED`, `CANCELLED`.
 
 ## Commandes rapides
@@ -87,20 +98,22 @@ cd frontend && npm ci && npm start
 
 **Auth** (`auth-service`)
 
-- `POST /auth/register` — body: `{ username, password, role?, adminCode?, firstName?, lastName?, filiere? }`
-- `POST /auth/login` — body: `{ username, password }` → `token` + `refreshToken`
+- `POST /auth/register` — body: `{ username, email, password, role?, adminCode?, firstName?, lastName?, filiere? }` (email institutionnel `@uhp.ac.ma` requis)
+- `POST /auth/login` — body: `{ email, password }` → `token` + `refreshToken` (le `username` reste accepté pour compatibilité)
 - `POST /auth/refresh` — body: `{ refreshToken }`
-- `POST /auth/forgot` / `POST /auth/reset` / `GET /auth/verify?token=`
+- `POST /auth/forgot` — body: `{ email }` / `POST /auth/reset` / `GET /auth/verify?token=`
 - `PUT /auth/profile?username=` — mise à jour du profil (mot de passe actuel requis)
 - `GET /auth/users`, `POST /auth/users` (création de compte), `PUT /auth/users/{id}/role`, `PUT /auth/users/{id}/filiere`, `DELETE /auth/users/{id}` (admin)
 
 **Booking** (`booking-service`)
 
 - `GET /resources`, `POST/PUT/DELETE /resources` (admin)
-- `GET /bookings/availability?resource=&date=&creneau=`
+- `GET /bookings/availability?resource=&date=&creneau=` et `GET /bookings/availability/day?date=`
+- `GET /bookings/calendar?from=&to=&resource=&filiere=` (vues jour / semaine / mois)
 - `POST /bookings`, `GET /bookings/mine?username=`, `PUT /bookings/{id}`, `DELETE /bookings/{id}`
 - `GET /bookings/approvals`, `POST /bookings/{id}/approve|reject|confirm`
 - `POST /bookings/{id}/document` (PDF), `GET /bookings/{id}/document`
+- `GET /bookings/{id}/signed-document` (PDF d'autorisation signé pour un événement de club)
 
 **Notification** (`notification-service`)
 

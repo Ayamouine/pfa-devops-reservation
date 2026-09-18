@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { FILIERES, ROLES, ROLE_LABELS, getUsers, createUser, updateUserRole, updateUserFiliere, deleteUser } from '../api';
+import { FILIERES_GROUPES, ROLES, ROLE_LABELS, getUsers, createUser, updateUserRole, updateUserFiliere, deleteUser } from '../api';
 
 export default function AdminUsersPage() {
   const { token, currentUser, showToast, askConfirm } = useAuth();
@@ -64,7 +64,7 @@ export default function AdminUsersPage() {
     }
   };
 
-  const formNeedsFiliere = ['PROF', 'CHEF_FILIERE', 'DOYEN', 'ETUDIANT'].includes(form.role);
+  const formNeedsFiliere = ['PROF', 'CHEF_FILIERE', 'ETUDIANT'].includes(form.role);
 
   const handleRoleChange = async (user, newRole) => {
     setSavingRole(user.id);
@@ -109,7 +109,7 @@ export default function AdminUsersPage() {
   };
 
   const showFiliere = (u) =>
-    u.role === 'CHEF_FILIERE' || u.role === 'PROF' || u.role === 'DOYEN' || u.role === 'ETUDIANT';
+    u.role === 'CHEF_FILIERE' || u.role === 'PROF' || u.role === 'ETUDIANT';
 
   return (
     <div className="page">
@@ -171,7 +171,11 @@ export default function AdminUsersPage() {
                   <label htmlFor="new-filiere">Filière</label>
                   <select id="new-filiere" name="filiere" value={form.filiere} onChange={handleFormChange} required={form.role === 'CHEF_FILIERE'}>
                     <option value="">— Choisir la filière —</option>
-                    {FILIERES.map((f) => <option value={f} key={f}>{f}</option>)}
+                    {FILIERES_GROUPES.map((g) => (
+                      <optgroup key={g.groupe} label={g.groupe}>
+                        {g.filieres.map((f) => <option value={f} key={f}>{f}</option>)}
+                      </optgroup>
+                    ))}
                   </select>
                 </div>
               )}
@@ -219,7 +223,11 @@ export default function AdminUsersPage() {
                         aria-label={`Filière de ${u.username}`}
                       >
                         <option value="">— Filière —</option>
-                        {FILIERES.map((f) => <option value={f} key={f}>{f}</option>)}
+                        {FILIERES_GROUPES.map((g) => (
+                          <optgroup key={g.groupe} label={g.groupe}>
+                            {g.filieres.map((f) => <option value={f} key={f}>{f}</option>)}
+                          </optgroup>
+                        ))}
                       </select>
                     )}
                     <button

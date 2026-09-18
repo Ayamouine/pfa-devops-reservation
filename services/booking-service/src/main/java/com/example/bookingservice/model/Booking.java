@@ -11,6 +11,10 @@ public class Booking {
     private String creneau;
     private String motif;
     private String filiere;
+    private String bookingType;
+    private String club;
+    private String signedDocumentName;
+    private boolean hasSignedDocument;
     private String documentName;
     private boolean hasDocument;
     private String chefComment;
@@ -45,6 +49,14 @@ public class Booking {
     public void setMotif(String motif) { this.motif = motif; }
     public String getFiliere() { return filiere; }
     public void setFiliere(String filiere) { this.filiere = filiere; }
+    public String getBookingType() { return bookingType; }
+    public void setBookingType(String bookingType) { this.bookingType = bookingType; }
+    public String getClub() { return club; }
+    public void setClub(String club) { this.club = club; }
+    public String getSignedDocumentName() { return signedDocumentName; }
+    public void setSignedDocumentName(String signedDocumentName) { this.signedDocumentName = signedDocumentName; }
+    public boolean isHasSignedDocument() { return hasSignedDocument; }
+    public void setHasSignedDocument(boolean hasSignedDocument) { this.hasSignedDocument = hasSignedDocument; }
     public String getDocumentName() { return documentName; }
     public void setDocumentName(String documentName) { this.documentName = documentName; }
     public boolean isHasDocument() { return hasDocument; }

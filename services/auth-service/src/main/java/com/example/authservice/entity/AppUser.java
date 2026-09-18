@@ -18,6 +18,9 @@ public class AppUser {
     @Column(unique = true, nullable = false)
     private String username;
 
+    @Column(unique = true)
+    private String email;
+
     @Column(nullable = false)
     private String password;
 
@@ -31,6 +34,9 @@ public class AppUser {
     @Column(name = "last_name")
     private String lastName;
     private String filiere;
+
+    @Column(name = "club")
+    private String club;
 
     public AppUser() {
     }
@@ -51,6 +57,14 @@ public class AppUser {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public String getPassword() {
@@ -78,4 +92,6 @@ public class AppUser {
     public void setLastName(String lastName) { this.lastName = lastName; }
     public String getFiliere() { return filiere; }
     public void setFiliere(String filiere) { this.filiere = filiere; }
+    public String getClub() { return club; }
+    public void setClub(String club) { this.club = club; }
 }

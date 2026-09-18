@@ -2,6 +2,8 @@ package com.example.bookingservice.config;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
@@ -20,45 +22,76 @@ public class BookingDataLoader {
     private static final String CRE3 = "14:00-16:00";
     private static final String CRE4 = "16:00-18:00";
 
+    private static final List<String> EQ_AMPHI = List.of("Projecteur", "Tableau blanc", "Audio");
+    private static final List<String> EQ_TD = List.of("Projecteur", "Tableau blanc");
+    private static final List<String> EQ_TP = List.of("Ordinateurs", "Prises réseau", "Projecteur");
+    private static final List<String> EQ_CENTRAL =
+            List.of("Projecteur", "Tableau blanc", "Audio", "Visio", "Climatisation");
+
     @Bean
     CommandLineRunner seedResources(ResourceRepository resourceRepository) {
         return args -> {
             if (resourceRepository.count() > 0) {
                 return;
             }
-            resourceRepository.save(resource("Amphithéâtre A", "AMPHI", 250, "Bâtiment A", "Rez-de-chaussée",
-                    "Vidéoprojecteur, sonorisation, tableau blanc", 0.0,
-                    "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=60"));
-            resourceRepository.save(resource("Amphithéâtre B", "AMPHI", 200, "Bâtiment A", "Rez-de-chaussée",
-                    "Vidéoprojecteur, sonorisation", 0.0,
-                    "https://images.unsplash.com/photo-1519452575417-564c1401ecc0?w=800&q=60"));
-            resourceRepository.save(resource("Amphithéâtre C", "AMPHI", 180, "Bâtiment B", "Rez-de-chaussée",
-                    "Vidéoprojecteur, climatisation", 0.0,
-                    "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=800&q=60"));
-            resourceRepository.save(resource("Salle de cours A101", "SALLE", 60, "Bâtiment A", "1er étage",
-                    "Vidéoprojecteur, tableau blanc", 0.0,
-                    "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=60"));
-            resourceRepository.save(resource("Salle de cours A102", "SALLE", 45, "Bâtiment A", "1er étage",
-                    "Vidéoprojecteur", 0.0, null));
-            resourceRepository.save(resource("Salle de cours B201", "SALLE", 40, "Bâtiment B", "2ème étage",
-                    "Tableau blanc, climatisation", 0.0, null));
-            resourceRepository.save(resource("Salle TP Informatique 1", "TP", 24, "Bâtiment C", "1er étage",
-                    "24 postes, réseau, vidéoprojecteur", 0.0,
-                    "https://images.unsplash.com/photo-1517048676732-d65bc937f952?w=800&q=60"));
-            resourceRepository.save(resource("Salle TP Informatique 2", "TP", 24, "Bâtiment C", "1er étage",
-                    "24 postes, réseau", 0.0, null));
-            resourceRepository.save(resource("Salle TP Réseaux", "TP", 20, "Bâtiment C", "2ème étage",
-                    "Bancs réseau, switches, serveurs", 0.0, null));
-            resourceRepository.save(resource("Salle de réunion — Conseil", "REUNION", 16, "Bâtiment Direction",
-                    "1er étage", "Écran, visioconférence", 0.0,
-                    "https://images.unsplash.com/photo-1431540015161-0bf868a2d407?w=800&q=60"));
-            resourceRepository.save(resource("Salle de réunion — Département", "REUNION", 12, "Bâtiment B",
-                    "1er étage", "Tableau blanc, écran", 0.0, null));
-            resourceRepository.save(resource("Salle de conférence", "REUNION", 80, "Bâtiment Direction",
-                    "Rez-de-chaussée", "Sonorisation, vidéoprojecteur, estrade", 0.0, null));
-            resourceRepository.save(resource("Laboratoire Génie Civil", "AUTRE", 30, "Bâtiment D", "Rez-de-chaussée",
-                    "Équipements de laboratoire, EPI", 0.0, null));
+
+            for (int i = 1; i <= 6; i++) {
+                resourceRepository.save(resource("Amphi " + i, "AMPHI", "AMPHI", 200,
+                        "Amphithéâtres", "RDC", EQ_AMPHI));
+            }
+
+            for (String bloc : List.of("A", "B", "C", "D")) {
+                seedBloc(resourceRepository, bloc);
+            }
+
+            resourceRepository.save(resource("Amphi NB1", "AMPHI", "AMPHI", 150,
+                    "Cycle Ingénieur", "RDC", EQ_AMPHI));
+            resourceRepository.save(resource("Amphi NB2", "AMPHI", "AMPHI", 150,
+                    "Cycle Ingénieur", "RDC", EQ_AMPHI));
+            for (int niveau = 0; niveau <= 2; niveau++) {
+                for (int salle = 1; salle <= 6; salle++) {
+                    resourceRepository.save(resource("Salle NB" + numero(niveau, salle), "TD", "TD", 40,
+                            "Cycle Ingénieur", niveauLabel(niveau), EQ_TD));
+                }
+            }
+
+            resourceRepository.save(resource("Amphi Central", "AMPHI", "AMPHI", 500,
+                    "Amphi Central", "RDC", EQ_CENTRAL));
         };
+    }
+
+    private void seedBloc(ResourceRepository resourceRepository, String bloc) {
+        boolean blocTP = "B".equals(bloc) || "C".equals(bloc);
+        for (int niveau = 0; niveau <= 2; niveau++) {
+            for (int salle = 1; salle <= 6; salle++) {
+                String type = "TD";
+                List<String> equipments = EQ_TD;
+                if (blocTP) {
+                    type = "TP";
+                    equipments = EQ_TP;
+                } else if (niveau == 0 && salle <= 2) {
+                    type = "TP";
+                    equipments = EQ_TP;
+                }
+                resourceRepository.save(resource("Salle " + bloc + numero(niveau, salle), type, type,
+                        capacite(type), "Bloc " + bloc, niveauLabel(niveau), equipments));
+            }
+        }
+    }
+
+    private String numero(int niveau, int salle) {
+        return String.format("%02d", niveau * 10 + salle);
+    }
+
+    private String niveauLabel(int niveau) {
+        if (niveau == 0) {
+            return "RDC";
+        }
+        return niveau == 1 ? "1er étage" : niveau + "e étage";
+    }
+
+    private int capacite(String type) {
+        return "TD".equals(type) ? 40 : 30;
     }
 
     @Bean
@@ -67,19 +100,19 @@ public class BookingDataLoader {
             if (bookingRepository.count() > 0) {
                 return;
             }
-            bookingRepository.save(booking("Salle de cours A101", LocalDate.now().plusDays(3), CRE1,
-                    "PENDING", "prof", "Informatique",
+            bookingRepository.save(booking("Amphi 1", LocalDate.now().plusDays(3), CRE1,
+                    "PENDING", "prof", "GI",
                     "Cours de développement web (2AP)",
                     "PENDING|prof|Demande de réservation créée"));
 
-            bookingRepository.save(booking("Salle de cours A102", LocalDate.now().plusDays(4), CRE2,
-                    "APPROVED", "prof", "Informatique",
+            bookingRepository.save(booking("Salle A11", LocalDate.now().plusDays(4), CRE2,
+                    "APPROVED", "prof", "GI",
                     "TP encadré de bases de données",
                     "PENDING|prof|Demande de réservation créée",
                     "APPROVED|chef|Salle disponible, demande validée"));
 
-            bookingRepository.save(booking("Salle TP Informatique 1", LocalDate.now().plusDays(5), CRE3,
-                    "CONFIRMED", "prof", "Informatique",
+            bookingRepository.save(booking("Salle C01", LocalDate.now().plusDays(5), CRE3,
+                    "CONFIRMED", "prof", "GI",
                     "Examen pratique de programmation",
                     "PENDING|prof|Demande de réservation créée",
                     "APPROVED|chef|Validé",
@@ -88,12 +121,19 @@ public class BookingDataLoader {
         };
     }
 
-    private ResourceEntity resource(String name, String category, int capacity, String building, String floor,
-                                    String equipment, double price, String photo) {
-        ResourceEntity entity = new ResourceEntity(name, category, capacity, null, equipment, price);
+    private ResourceEntity resource(String name, String category, String type, int capacity, String building,
+                                    String floor, List<String> equipments) {
+        ResourceEntity entity = new ResourceEntity();
+        entity.setName(name);
+        entity.setCategory(category);
+        entity.setType(type);
+        entity.setCapacity(capacity);
         entity.setBuilding(building);
         entity.setFloor(floor);
-        entity.setPhoto(photo);
+        entity.setEquipment(String.join(", ", equipments));
+        entity.setEquipments(new HashSet<>(equipments));
+        entity.setPrice(0.0);
+        entity.setActive(true);
         return entity;
     }
 

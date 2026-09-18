@@ -3,16 +3,17 @@ describe('Full API reservation flow', () => {
   const bookingUrl = Cypress.env('BOOKING_URL') || 'http://localhost:8082';
   const paymentUrl = Cypress.env('PAYMENT_URL') || 'http://localhost:8084';
   const username = `full_e2e_${Date.now()}`;
+  const email = `${username}@uhp.ac.ma`;
   const password = 'Pass!2345';
 
   it('registers, logs in, creates booking, pays, confirms and cancels', () => {
     // Register
-    cy.request('POST', `${authUrl}/auth/register`, { username, password }).then((reg) => {
+    cy.request('POST', `${authUrl}/auth/register`, { username, email, password }).then((reg) => {
       expect([200,201]).to.include(reg.status);
     });
 
     // Login
-    cy.request('POST', `${authUrl}/auth/login`, { username, password }).then((loginRes) => {
+    cy.request('POST', `${authUrl}/auth/login`, { email, password }).then((loginRes) => {
       expect(loginRes.status).to.eq(200);
       const token = loginRes.body.token;
 

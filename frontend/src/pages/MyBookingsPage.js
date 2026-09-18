@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import {
-  FILIERES,
+  FILIERES_GROUPES,
   getResources,
   createBooking,
   getMyBookings,
@@ -10,12 +10,14 @@ import {
   cancelBooking,
   attachDocument,
   downloadDocument,
+  downloadSignedDocument,
   statusClass,
   statusLabel,
   checkAvailability,
+  SLOTS,
 } from '../api';
 
-const CRENEAUX = ['08:30-10:30', '10:45-12:45', '14:00-16:00', '16:15-18:15'];
+const CRENEAUX = SLOTS;
 
 function historyClass(status) {
   const s = (status || '').toLowerCase();
@@ -98,6 +100,8 @@ export default function MyBookingsPage() {
     if (form.resource && form.date) handleCheck();
   }, [form.resource, form.date, form.creneau]);
 
+  const isClub = currentUser.role === 'CLUB';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -107,17 +111,22 @@ export default function MyBookingsPage() {
         date: form.date,
         creneau: form.creneau,
         motif: form.motif,
-        filiere: form.filiere,
         username: currentUser.username,
         status: 'pending',
       };
+      if (isClub) {
+        payload.bookingType = 'EVENEMENT';
+        payload.club = currentUser.club;
+      } else {
+        payload.filiere = form.filiere;
+      }
       const created = await createBooking(token, payload);
       if (file) {
         const updated = await attachDocument(token, created.id, file);
-        showToast('Demande créée avec document justificatif.', 'success');
+        showToast(isClub ? 'Demande d’événement créée avec document justificatif.' : 'Demande créée avec document justificatif.', 'success');
         return updated;
       }
-      showToast('Demande de réservation envoyée au chef de filière.', 'success');
+      showToast(isClub ? 'Demande d’événement envoyée au doyen.' : 'Demande de réservation envoyée au chef de filière.', 'success');
       setForm((f) => ({ ...f, resource: '', date: '', motif: '', creneau: CRENEAUX[0] }));
       setFile(null);
       if (fileRef.current) fileRef.current.value = '';
@@ -167,13 +176,13 @@ export default function MyBookingsPage() {
     });
   };
 
-  const handleUpload = async (booking) => {
-    if (!fileRef.current?.files?.length) {
+  const handleUpload = async (booking, file) => {
+    if (!file) {
       showToast('Sélectionnez d’abord un fichier PDF.', 'error');
       return;
     }
     try {
-      const updated = await attachDocument(token, booking.id, fileRef.current.files[0]);
+      const updated = await attachDocument(token, booking.id, file);
       if (updated && updated.id) {
         showToast('Document justificatif joint.', 'success');
         load();
@@ -196,6 +205,19 @@ export default function MyBookingsPage() {
     }
   };
 
+  const handleViewSignedDocument = async (booking) => {
+    try {
+      const { url, filename } = await downloadSignedDocument(token, booking.id);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      showToast(err.message || 'Document signé indisponible.', 'error');
+    }
+  };
+
   const userCanAct = (b) =>
     (currentUser.role === 'PROF' || currentUser.role === 'ADMIN') || b.username === currentUser.username;
 
@@ -204,7 +226,9 @@ export default function MyBookingsPage() {
       <header className="page-header">
         <h1 className="page-title">Mes demandes</h1>
         <p className="page-subtitle">
-          Demande de salle soumise au chef de filière, puis cachet du doyen.
+          {isClub
+            ? 'Demande d’événement (salle) envoyée directement au doyen pour signature.'
+            : 'Demande de salle soumise au chef de filière, puis cachet du doyen.'}
         </p>
       </header>
 
@@ -242,24 +266,30 @@ export default function MyBookingsPage() {
             </p>
           )}
           <div className="field">
-            <label htmlFor="motif">Motif de la réservation</label>
-            <textarea id="motif" name="motif" rows="3" value={form.motif} onChange={handleChange} placeholder="Ex. Cours de Smart Systems, TP de Bases de Données…" required />
+            <label htmlFor="motif">{isClub ? 'Objet de l’événement' : 'Motif de la réservation'}</label>
+            <textarea id="motif" name="motif" rows="3" value={form.motif} onChange={handleChange} placeholder={isClub ? 'Ex. Journée d’intégration, Hackathon, Conférence…' : 'Ex. Cours de Smart Systems, TP de Bases de Données…'} required />
           </div>
           <div className="form-grid">
-            <div className="field">
-              <label htmlFor="filiere">Filière</label>
-              <select id="filiere" name="filiere" value={form.filiere} onChange={handleChange} required>
-                <option value="">— Choisir la filière —</option>
-                {FILIERES.map((f) => <option value={f} key={f}>{f}</option>)}
-              </select>
-            </div>
+            {!isClub && (
+              <div className="field">
+                <label htmlFor="filiere">Filière</label>
+                <select id="filiere" name="filiere" value={form.filiere} onChange={handleChange} required>
+                  <option value="">— Choisir la filière —</option>
+                  {FILIERES_GROUPES.map((g) => (
+                    <optgroup key={g.groupe} label={g.groupe}>
+                      {g.filieres.map((f) => <option value={f} key={f}>{f}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="field">
               <label htmlFor="document">Document justificatif (PDF, optionnel)</label>
               <input id="document" ref={fileRef} type="file" accept="application/pdf,.pdf" onChange={(e) => setFile(e.target.files[0])} />
             </div>
           </div>
           <button type="submit" className="btn btn-accent btn-block" disabled={submitting || checking || available === false}>
-            {submitting ? 'Envoi…' : 'Envoyer la demande de réservation'}
+            {submitting ? 'Envoi…' : isClub ? 'Envoyer la demande d’événement' : 'Envoyer la demande de réservation'}
           </button>
         </form>
       </section>
@@ -281,9 +311,16 @@ export default function MyBookingsPage() {
                 <div className={`ticket-stub ${statusClass(b.status)}`} />
                 <div className="ticket-body">
                   <div className="ticket-main">
-                    <span className="ticket-resource">{b.resource}</span>
+                    <span className="ticket-resource">
+                      {b.resource}
+                      {b.bookingType === 'EVENEMENT' && (
+                        <span className="role-tag" style={{ marginLeft: 8 }}>
+                          Événement{b.club ? ` · ${b.club}` : ''}
+                        </span>
+                      )}
+                    </span>
                     <span className="ticket-meta">
-                      {b.date} · {b.creneau} · {b.filiere || 'Sans filière'}
+                      {b.date} · {b.creneau} · {b.filiere || b.club || 'Sans filière'}
                     </span>
                   </div>
                   <div className="ticket-right">
@@ -291,9 +328,26 @@ export default function MyBookingsPage() {
                     {(b.status === 'PENDING' || b.status === 'pending') && userCanAct(b) && (
                       <>
                         <button className="btn btn-ghost" type="button" onClick={() => startEdit(b)}>Modifier</button>
-                        <button className="btn btn-ghost" type="button" onClick={handleUpload} title="Joindre un PDF">Joindre PDF</button>
                         <button className="btn btn-danger-outline" type="button" onClick={() => handleCancel(b)}>Annuler</button>
                       </>
+                    )}
+                    {(b.status === 'APPROVED' || b.status === 'approved') && isClub && userCanAct(b) && (
+                      <button className="btn btn-danger-outline" type="button" onClick={() => handleCancel(b)}>Annuler</button>
+                    )}
+                    {(b.status === 'PENDING' || b.status === 'pending' || b.status === 'APPROVED' || b.status === 'approved') && userCanAct(b) && !b.documentName && (
+                      <label className="btn btn-ghost" style={{ cursor: 'pointer' }}>
+                        Joindre PDF
+                        <input
+                          type="file"
+                          accept="application/pdf,.pdf"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const f = e.target.files[0];
+                            if (f) handleUpload(b, f);
+                            e.target.value = '';
+                          }}
+                        />
+                      </label>
                     )}
                   </div>
                 </div>
@@ -303,6 +357,11 @@ export default function MyBookingsPage() {
                   {b.documentName && (
                     <button className="btn btn-sm btn-primary" type="button" onClick={() => handleViewDocument(b)}>
                       Voir le document ({b.documentName})
+                    </button>
+                  )}
+                  {b.hasSignedDocument && (
+                    <button className="btn btn-sm btn-accent" type="button" onClick={() => handleViewSignedDocument(b)}>
+                      Télécharger le PDF signé
                     </button>
                   )}
                 </div>

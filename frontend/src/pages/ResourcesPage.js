@@ -1,16 +1,27 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getResources } from '../api';
+import { getResources, getOccupiedResources, ROOM_TYPES, ROOM_TYPE_LABELS, EQUIPMENTS } from '../api';
 import { useAuth } from '../AuthContext';
 
-const PLACEHOLDER = 'https://www.fsts.ac.ma/images/fst_hero_img.jpg';
+const equipmentsOf = (r) => {
+  if (Array.isArray(r.equipments) && r.equipments.length > 0) return r.equipments;
+  if (r.equipment) return r.equipment.split(',').map((s) => s.trim()).filter(Boolean);
+  return [];
+};
+
+const typeLabel = (r) => ROOM_TYPE_LABELS[r.type || r.category] || r.type || r.category || 'Salle';
 
 export default function ResourcesPage() {
   const { token, currentUser } = useAuth();
   const [resources, setResources] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [building, setBuilding] = useState('');
   const [query, setQuery] = useState('');
+  const [building, setBuilding] = useState('');
+  const [type, setType] = useState('');
+  const [minCapacity, setMinCapacity] = useState('');
+  const [equipFilter, setEquipFilter] = useState([]);
+  const [date, setDate] = useState('');
+  const [occupied, setOccupied] = useState([]);
 
   useEffect(() => {
     getResources(token)
@@ -19,21 +30,46 @@ export default function ResourcesPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
+  useEffect(() => {
+    if (!date) {
+      setOccupied([]);
+      return;
+    }
+    getOccupiedResources(token, date)
+      .then((list) => setOccupied(list))
+      .catch(() => setOccupied([]));
+  }, [date, token]);
+
   const buildings = useMemo(() => Array.from(new Set(resources.map((r) => r.building).filter(Boolean))), [resources]);
+
+  const toggleEquip = (e) =>
+    setEquipFilter((prev) => (prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]));
+
+  const resetFilters = () => {
+    setQuery('');
+    setBuilding('');
+    setType('');
+    setMinCapacity('');
+    setEquipFilter([]);
+    setDate('');
+  };
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return resources.filter((r) => {
       if (building && r.building !== building) return false;
-      if (q && !`${r.name} ${r.category || ''} ${r.floor || ''} ${r.equipment || ''}`.toLowerCase().includes(q)) return false;
+      if (type && (r.type || r.category) !== type) return false;
+      if (minCapacity && Number(r.capacity || 0) < Number(minCapacity)) return false;
+      if (equipFilter.length) {
+        const set = equipmentsOf(r);
+        if (!equipFilter.every((e) => set.includes(e))) return false;
+      }
+      if (date && occupied.includes(r.name)) return false;
+      const haystack = `${r.name} ${r.type || r.category || ''} ${r.floor || ''} ${r.building || ''} ${equipmentsOf(r).join(' ')}`.toLowerCase();
+      if (q && !haystack.includes(q)) return false;
       return true;
     });
-  }, [resources, building, query]);
-
-  const catLabel = (c) => {
-    const map = { SALLE: 'Salle', TP: 'Salle TP', AMPHI: 'Amphithéâtre', REUNION: 'Salle de réunion', AUTRE: 'Autre' };
-    return map[c] || c || 'Salle';
-  };
+  }, [resources, building, type, minCapacity, equipFilter, date, occupied, query]);
 
   return (
     <div className="page">
@@ -61,6 +97,54 @@ export default function ResourcesPage() {
               {buildings.map((b) => <option value={b} key={b}>{b}</option>)}
             </select>
           </div>
+          <div className="field">
+            <label htmlFor="type">Type de salle</label>
+            <select id="type" value={type} onChange={(e) => setType(e.target.value)}>
+              <option value="">Tous les types</option>
+              {ROOM_TYPES.map((t) => <option value={t.value} key={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-grid form-grid-3">
+          <div className="field">
+            <label htmlFor="minCapacity">Capacité minimale</label>
+            <input
+              id="minCapacity"
+              type="number"
+              min="0"
+              placeholder="Ex. 40"
+              value={minCapacity}
+              onChange={(e) => setMinCapacity(e.target.value)}
+            />
+          </div>
+          <div className="field">
+            <label htmlFor="date">Disponible le</label>
+            <input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div className="field" style={{ justifyContent: 'flex-end' }}>
+            <button type="button" className="btn btn-ghost" onClick={resetFilters}>Réinitialiser</button>
+          </div>
+        </div>
+
+        <div className="field">
+          <label>Équipements</label>
+          <div className="resource-meta" style={{ marginBottom: 0 }}>
+            {EQUIPMENTS.map((e) => {
+              const active = equipFilter.includes(e);
+              return (
+                <button
+                  type="button"
+                  key={e}
+                  className="meta-chip"
+                  onClick={() => toggleEquip(e)}
+                  style={active ? { background: 'var(--primary)', color: '#fff', borderColor: 'var(--primary)' } : undefined}
+                >
+                  {e}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -70,38 +154,38 @@ export default function ResourcesPage() {
       )}
       {!loading && filtered.length > 0 && (
         <div className="resource-list">
-          {filtered.map((r) => (
-            <div className="resource-card" key={r.id || r.name}>
-              <div className="resource-photo">
-                {r.photo ? <img src={r.photo} alt={r.name} /> : <img src={PLACEHOLDER} alt="" />}
-                <div className="photo-overlay">
-                  <span className="photo-category">{catLabel(r.category)}</span>
-                  <span className="photo-price">{r.price ? `${r.price} MAD` : 'Gratuit'}</span>
-                </div>
-              </div>
-              <div className="resource-body">
-                <Link className="resource-name" to={`/ressources/${encodeURIComponent(r.name)}`}>
-                  {r.name}
-                </Link>
-                <div className="resource-location">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  {[r.building, r.floor].filter(Boolean).join(' · ') || r.location || 'Localisation à préciser'}
-                </div>
-                <div className="resource-meta">
-                  {r.capacity && <span className="meta-chip">👥 {r.capacity} pers.</span>}
-                  {r.equipment && <span className="meta-chip">🛠 {r.equipment}</span>}
-                </div>
-                <div className="resource-card-footer">
-                  <Link className="resource-card-link" to={`/ressources/${encodeURIComponent(r.name)}`}>
-                    Voir le détail →
+          {filtered.map((r) => {
+            const isOccupied = date && occupied.includes(r.name);
+            return (
+              <div className="resource-card" key={r.id || r.name}>
+                <div className="resource-body">
+                  <div className="resource-meta" style={{ marginBottom: 8 }}>
+                    <span className="meta-chip">{typeLabel(r)}</span>
+                    {r.capacity && <span className="meta-chip">👥 {r.capacity} pers.</span>}
+                    {isOccupied && <span className="meta-chip" style={{ background: '#fdecea', color: '#b3261e', borderColor: '#f5c2bd' }}>Occupé le {date}</span>}
+                  </div>
+                  <Link className="resource-name" to={`/ressources/${encodeURIComponent(r.name)}`}>
+                    {r.name}
                   </Link>
+                  <div className="resource-location">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 0 1 16 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    {[r.building, r.floor].filter(Boolean).join(' · ') || r.location || 'Localisation à préciser'}
+                  </div>
+                  <div className="resource-meta">
+                    {equipmentsOf(r).map((e) => <span className="meta-chip" key={e}>🛠 {e}</span>)}
+                  </div>
+                  <div className="resource-card-footer">
+                    <Link className="resource-card-link" to={`/ressources/${encodeURIComponent(r.name)}`}>
+                      Voir le détail →
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

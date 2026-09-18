@@ -7,60 +7,6 @@ const HERO_PHOTO = 'https://www.fsts.ac.ma/images/fst_hero_img.jpg';
 const PRESENTATION_PHOTO =
   'https://www.fsts.ac.ma/storage/presentation-faculte/hero/Jx9BaRnIzDgYre0nrRJHOsPLxVFzpyWHrnEOwpXH.jpg';
 
-const GALERIE = [
-  'https://www.fsts.ac.ma/storage/presentation-faculte/images/EqURqXxI6dPW55enAAwjuA6fvUIOvnJueiRmD8Ue.jpg',
-  'https://www.fsts.ac.ma/storage/presentation-faculte/images/t6NsBFSTW5xhgxDYATALrQ1Qh3VmdvDDb1qel5A0.jpg',
-  'https://www.fsts.ac.ma/storage/presentation-faculte/images/q8dLCUIRCn0ocYBNOteeKhGXy9wWg0buvH2xKrVi.jpg',
-  'https://www.fsts.ac.ma/storage/presentation-faculte/images/zI0qLTDOcE01wCf5uzj2ctnF6eIQlPdCbPHaUmDs.jpg',
-  'https://www.fsts.ac.ma/storage/presentation-faculte/images/fCfLr8OIM3NOcGNoZjofALUbU3Me7rEJweuJeV0c.jpg',
-  'https://www.fsts.ac.ma/storage/presentation-faculte/images/ml2OqHsZiuhT4f3iHBvw2vOfZe1WTnSXbnt61qDM.jpg',
-];
-
-const ACTUALITES = [
-  {
-    date: '17 sept. 2026',
-    tag: 'Soutenances',
-    title: 'Avis de Soutenance de Doctorat',
-    text: 'Madame OUBELKAS Farah soutiendra sa thèse de Doctorat intitulée « Self supervised learning for multimedia data analysis ».',
-    link: 'https://www.fsts.ac.ma/actualites/avis-de-soutenance-de-doctorat-4',
-  },
-  {
-    date: '16 sept. 2026',
-    tag: 'Actualité',
-    title: 'Début de la rentrée universitaire 2026/2027',
-    text: 'Le début des cours a lieu le Lundi 21 Septembre 2026. Consultez les emplois du temps en ligne avant la reprise.',
-    link: 'https://www.fsts.ac.ma/actualites/debut-de-la-rentree-universitaire-20262027-emplois-du-temps',
-  },
-  {
-    date: '14 sept. 2026',
-    tag: 'Actualité',
-    title: 'Accès Via Passerelles au 5ème semestre des Licences',
-    text: 'La FSTS lance un appel à candidature pour l’inscription en S5 des Licences en Sciences et Techniques.',
-    link: 'https://www.fsts.ac.ma/actualites/acces-via-passerelles-au-5eme-semestre-des-licences-en-sciences-et-techniques',
-  },
-  {
-    date: '11 sept. 2026',
-    tag: 'Concours',
-    title: 'Résultats du concours d’accès au Master en Sciences et Techniques',
-    text: 'Consultez la liste des candidats admis au concours d’accès au MST MTE et les modalités d’inscription.',
-    link: 'https://www.fsts.ac.ma/actualites/annonce-resultats-du-concours-dacces-au-master-en-sciences-et-techniques',
-  },
-  {
-    date: '9 sept. 2026',
-    tag: 'Inscription',
-    title: 'Inscription des bacheliers admis à la FST — 2ème Itération',
-    text: 'Les étudiants admis à s’inscrire à la FST sont invités à se présenter les 10-11 Septembre 2026 de 09h30 à 16h00.',
-    link: 'https://www.fsts.ac.ma/actualites/important-inscription-des-bacheliers-admis-a-la-fst-de-settat-2eme-iteration',
-  },
-  {
-    date: '4 sept. 2026',
-    tag: 'Concours',
-    title: 'Résultats de présélection du concours d’accès au Master MTE',
-    text: 'Liste des candidats présélectionnés pour le concours écrit du 08 Septembre 2026 à 10H00, dossier à préparer.',
-    link: 'https://www.fsts.ac.ma/actualites/important-resultats-de-preselection-pour-passer-le-concours-ecrit-dacces-au-master-en-sciences-et-techniques-mathematiques-et-technologies-emergentes-date-du-concours-mardi-08-septembre-2026-a-10h00',
-  },
-];
-
 const FORMATIONS = [
   {
     title: 'Tronc commun',
@@ -186,8 +132,6 @@ export default function HomePage() {
             <a href="#accueil">Accueil</a>
             <a href="#faculte">La Faculté</a>
             <a href="#formations">Formations</a>
-            <a href="#actualites">Actualités</a>
-            <a href="#galerie">Galerie</a>
             <a href="#contact">Contact</a>
           </div>
           {!currentUser ? (
@@ -223,8 +167,8 @@ export default function HomePage() {
             <Link className="btn btn-primary" to={currentUser ? '/app' : '/register'}>
               Accéder à la plateforme de réservation
             </Link>
-            <a className="btn btn-ghost" href="#actualites">
-              Voir les actualités
+            <a className="btn btn-ghost" href="#faculte">
+              Découvrir la faculté
             </a>
           </div>
         </div>
@@ -330,49 +274,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="site-section" id="actualites">
-        <div className="site-section-header">
-          <div className="eyebrow">Restez informés</div>
-          <h2 className="site-section-title">Actualités récentes</h2>
-          <div className="gold-bar" />
-        </div>
-        <div className="news-grid">
-          {ACTUALITES.map((a) => (
-            <article className="news-card" key={a.title}>
-              <img src={HERO_PHOTO} alt="" />
-              <div className="news-card-date">
-                {a.tag} · {a.date}
-              </div>
-              <h3>{a.title}</h3>
-              <p>{a.text}</p>
-              <a
-                className="news-card-link"
-                href={a.link}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Lire la suite →
-              </a>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="site-section alt" id="galerie">
-        <div className="site-section-header">
-          <div className="eyebrow">Galerie</div>
-          <h2 className="site-section-title">Le campus en images</h2>
-          <div className="gold-bar" />
-        </div>
-        <div className="photos-grid">
-          {GALERIE.map((src) => (
-            <a href={src} target="_blank" rel="noopener noreferrer" key={src}>
-              <img src={src} alt="Photo de la FST Settat" />
-            </a>
-          ))}
-        </div>
-      </section>
-
       <section className="site-section" id="contact">
         <div className="site-section-header">
           <div className="eyebrow">Nous contacter</div>
@@ -439,7 +340,6 @@ export default function HomePage() {
             <a href="#accueil">Accueil</a>
             <a href="#faculte">La Faculté</a>
             <a href="#formations">Formations</a>
-            <a href="#actualites">Actualités</a>
             <a href="#contact">Contact</a>
           </div>
           <div>

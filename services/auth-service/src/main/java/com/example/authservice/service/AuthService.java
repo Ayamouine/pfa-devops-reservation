@@ -31,13 +31,17 @@ import io.jsonwebtoken.security.Keys;
 public class AuthService {
 
     public static final List<String> VALID_ROLES = List.of(
-            "USER", "ADMIN", "ETUDIANT", "PROF", "CHEF_FILIERE", "DOYEN");
+            "USER", "ADMIN", "ETUDIANT", "PROF", "CHEF_FILIERE", "DOYEN", "CLUB");
+
+    private static final java.util.regex.Pattern INSTITUTIONAL_EMAIL =
+            java.util.regex.Pattern.compile("^[\\w.+-]+@uhp\\.ac\\.ma$", java.util.regex.Pattern.CASE_INSENSITIVE);
 
     private final String secret;
     private final String adminRegistrationCode;
     private final String profRegistrationCode;
     private final String chefRegistrationCode;
     private final String doyenRegistrationCode;
+    private final String clubRegistrationCode;
     private final AppUserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
@@ -53,7 +57,8 @@ public class AuthService {
                        @Value("${admin.registration.code:admin-code}") String adminRegistrationCode,
                        @Value("${prof.registration.code:pfa-prof-2026}") String profRegistrationCode,
                        @Value("${chef.registration.code:pfa-chef-2026}") String chefRegistrationCode,
-                       @Value("${doyen.registration.code:pfa-doyen-2026}") String doyenRegistrationCode) {
+                       @Value("${doyen.registration.code:pfa-doyen-2026}") String doyenRegistrationCode,
+                       @Value("${club.registration.code:pfa-club-2026}") String clubRegistrationCode) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository;
@@ -64,24 +69,45 @@ public class AuthService {
         this.profRegistrationCode = profRegistrationCode;
         this.chefRegistrationCode = chefRegistrationCode;
         this.doyenRegistrationCode = doyenRegistrationCode;
+        this.clubRegistrationCode = clubRegistrationCode;
     }
 
     @Transactional
     public AuthResponse register(RegisterRequest request) {
+        String email = normalizeEmail(request.getEmail());
+        if (email == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'email institutionnel est requis");
+        }
+        if (!INSTITUTIONAL_EMAIL.matcher(email).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Email institutionnel invalide (format attendu : prenom.nom.fst@uhp.ac.ma)");
+        }
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
+        }
+        if (userRepository.existsByEmail(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cet email est déjà utilisé");
         }
 
         String requestedRole = request.getRole() == null || request.getRole().isBlank() ? "USER" : request.getRole();
         String finalRole = resolveFinalRole(request, requestedRole);
 
         AppUser user = new AppUser(request.getUsername(), passwordEncoder.encode(request.getPassword()), finalRole);
+        user.setEmail(email);
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setFiliere(request.getFiliere());
+        user.setClub(request.getClub());
         AppUser savedUser = userRepository.save(user);
         String refresh = createRefreshToken(savedUser.getUsername());
         return toAuthResponse(savedUser, refresh);
+    }
+
+    private String normalizeEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return null;
+        }
+        return email.trim().toLowerCase();
     }
 
     private String resolveFinalRole(RegisterRequest request, String requestedRole) {
@@ -102,6 +128,12 @@ public class AuthService {
             case "PROF":
                 requireCode(request.getAdminCode(), profRegistrationCode, "Code professeur invalide");
                 return "PROF";
+            case "CLUB":
+                requireCode(request.getAdminCode(), clubRegistrationCode, "Code club invalide");
+                if (request.getClub() == null || request.getClub().isBlank()) {
+                    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Le club est requis pour le rôle Club");
+                }
+                return "CLUB";
             case "ETUDIANT":
                 return "ETUDIANT";
             default:
@@ -117,7 +149,10 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(AuthRequest request) {
-        AppUser user = userRepository.findByUsername(request.getUsername())
+        String email = normalizeEmail(request.getEmail());
+        AppUser user = (email != null
+                ? userRepository.findByEmail(email)
+                : userRepository.findByUsername(request.getUsername()))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -171,13 +206,15 @@ public class AuthService {
         verificationTokenRepository.delete(vt);
     }
 
-    public String createPasswordResetToken(String username) {
-        if (!userRepository.existsByUsername(username)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found");
-        }
+    public String createPasswordResetToken(String identifier) {
+        String email = normalizeEmail(identifier);
+        AppUser user = (email != null
+                ? userRepository.findByEmail(email)
+                : userRepository.findByUsername(identifier))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
         String token = java.util.UUID.randomUUID().toString();
         java.time.Instant expiry = java.time.Instant.now().plus(java.time.Duration.ofHours(2));
-        PasswordResetToken prt = new PasswordResetToken(token, username, expiry);
+        PasswordResetToken prt = new PasswordResetToken(token, user.getUsername(), expiry);
         passwordResetTokenRepository.save(prt);
         return token;
     }
@@ -201,6 +238,8 @@ public class AuthService {
                 .setSubject(user.getUsername())
                 .claim("role", user.getRole())
                 .claim("filiere", user.getFiliere() == null ? "" : user.getFiliere())
+                .claim("email", user.getEmail() == null ? "" : user.getEmail())
+                .claim("club", user.getClub() == null ? "" : user.getClub())
                 .claim("firstName", user.getFirstName() == null ? "" : user.getFirstName())
                 .claim("lastName", user.getLastName() == null ? "" : user.getLastName())
                 .setIssuedAt(new Date())
@@ -214,12 +253,14 @@ public class AuthService {
                 user.getFirstName(), user.getLastName(), user.getFiliere());
         response.setId(user.getId());
         response.setAvatarColor(user.getAvatarColor());
+        response.setEmail(user.getEmail());
+        response.setClub(user.getClub());
         return response;
     }
 
     private UserDto toUserDto(AppUser user) {
         return new UserDto(user.getId(), user.getUsername(), user.getRole(),
-                user.getFirstName(), user.getLastName(), user.getFiliere());
+                user.getFirstName(), user.getLastName(), user.getFiliere(), user.getEmail(), user.getClub());
     }
 
     public List<UserDto> getAllUsers() {
@@ -247,10 +288,22 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
                     "La filière est requise pour le rôle Chef de filière");
         }
+        String email = normalizeEmail(request.getEmail());
+        if (email != null) {
+            if (!INSTITUTIONAL_EMAIL.matcher(email).matches()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Email institutionnel invalide (format attendu : prenom.nom.fst@uhp.ac.ma)");
+            }
+            if (userRepository.existsByEmail(email)) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Cet email est déjà utilisé");
+            }
+        }
         AppUser user = new AppUser(request.getUsername(), passwordEncoder.encode(request.getPassword()), role);
+        user.setEmail(email);
         user.setFirstName(request.getFirstName());
         user.setLastName(request.getLastName());
         user.setFiliere(request.getFiliere());
+        user.setClub(request.getClub());
         return toUserDto(userRepository.save(user));
     }
 
@@ -298,6 +351,20 @@ public class AuthService {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Ce nom d'utilisateur est déjà pris");
             }
             user.setUsername(request.getNewUsername());
+        }
+
+        if (request.getNewEmail() != null && !request.getNewEmail().isBlank()) {
+            String newEmail = normalizeEmail(request.getNewEmail());
+            if (!INSTITUTIONAL_EMAIL.matcher(newEmail).matches()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Email institutionnel invalide (format attendu : prenom.nom.fst@uhp.ac.ma)");
+            }
+            if (!newEmail.equals(user.getEmail())) {
+                if (userRepository.existsByEmail(newEmail)) {
+                    throw new ResponseStatusException(HttpStatus.CONFLICT, "Cet email est déjà utilisé");
+                }
+                user.setEmail(newEmail);
+            }
         }
 
         if (request.getNewPassword() != null && !request.getNewPassword().isBlank()) {

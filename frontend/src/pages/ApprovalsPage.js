@@ -56,7 +56,13 @@ export default function ApprovalsPage() {
     run(rejectBooking(token, b.id, comment(b.id)), b.id, 'Demande refusée.');
 
   const handleStamp = (b) =>
-    run(confirmBooking(token, b.id, comment(b.id)), b.id, 'Cachet apposé : réservation confirmée.');
+    run(
+      confirmBooking(token, b.id, comment(b.id)),
+      b.id,
+      b.bookingType === 'EVENEMENT'
+        ? 'Autorisation signée : le PDF cacheté est disponible pour le club.'
+        : 'Cachet apposé : réservation confirmée.'
+    );
 
   const handleViewDocument = async (b) => {
     try {
@@ -98,7 +104,8 @@ export default function ApprovalsPage() {
               <div>
                 <span className="approval-title">{b.resource}</span>
                 <div className="approval-subtitle">
-                  #{b.id} · demandeur <b>{b.username}</b> · {b.filiere || 'Sans filière'}
+                  #{b.id} · demandeur <b>{b.username}</b> · {b.filiere || (b.club ? `Club ${b.club}` : 'Sans filière')}
+                  {b.bookingType === 'EVENEMENT' && ' · Événement'}
                 </div>
               </div>
               <span className={`badge ${statusClass(b.status)}`}>{statusLabel(b.status)}</span>
@@ -150,7 +157,11 @@ export default function ApprovalsPage() {
               ) : (
                 <>
                   <button className="btn btn-primary" type="button" onClick={() => handleStamp(b)} disabled={busy === b.id}>
-                    {busy === b.id ? '…' : '🕮 Apposer le cachet (Confirmer)'}
+                    {busy === b.id
+                      ? '…'
+                      : b.bookingType === 'EVENEMENT'
+                        ? '✍ Signer l’autorisation d’événement'
+                        : '🕮 Apposer le cachet (Confirmer)'}
                   </button>
                   <button className="btn btn-danger-outline" type="button" onClick={() => setCommentOpen(commentOpen === b.id ? null : b.id)}>
                     Refuser malgré la validation

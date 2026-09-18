@@ -12,7 +12,8 @@
     { "key": "token", "value": "" },
     { "key": "refreshToken", "value": "" },
     { "key": "bookingId", "value": "1" },
-    { "key": "username", "value": "prof" }
+    { "key": "username", "value": "prof" },
+    { "key": "email", "value": "youssef.tazi.fst@uhp.ac.ma" }
   ],
   "item": [
     {
@@ -25,7 +26,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"etudiant.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"ETUDIANT\",\n  \"firstName\": \"Imane\",\n  \"lastName\": \"Rachidi\",\n  \"filiere\": \"Informatique\"\n}"
+              "raw": "{\n  \"username\": \"etudiant.demo\",\n  \"email\": \"imane.rachidi.fst@uhp.ac.ma\",\n  \"password\": \"demo1234\",\n  \"role\": \"ETUDIANT\",\n  \"firstName\": \"Imane\",\n  \"lastName\": \"Rachidi\",\n  \"filiere\": \"GI\"\n}"
             },
             "url": "{{authUrl}}/auth/register"
           }
@@ -37,7 +38,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"prof.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"PROF\",\n  \"adminCode\": \"pfa-prof-2026\",\n  \"firstName\": \"Youssef\",\n  \"lastName\": \"Tazi\",\n  \"filiere\": \"Informatique\"\n}"
+              "raw": "{\n  \"username\": \"prof.demo\",\n  \"email\": \"youssef.tazi.fst@uhp.ac.ma\",\n  \"password\": \"demo1234\",\n  \"role\": \"PROF\",\n  \"adminCode\": \"pfa-prof-2026\",\n  \"firstName\": \"Youssef\",\n  \"lastName\": \"Tazi\",\n  \"filiere\": \"GI\"\n}"
             },
             "url": "{{authUrl}}/auth/register"
           }
@@ -49,7 +50,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"chef.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"CHEF_FILIERE\",\n  \"adminCode\": \"pfa-chef-2026\",\n  \"filiere\": \"Informatique\"\n}"
+              "raw": "{\n  \"username\": \"chef.demo\",\n  \"email\": \"nadia.alaoui.fst@uhp.ac.ma\",\n  \"password\": \"demo1234\",\n  \"role\": \"CHEF_FILIERE\",\n  \"adminCode\": \"pfa-chef-2026\",\n  \"filiere\": \"GI\"\n}"
             },
             "url": "{{authUrl}}/auth/register"
           }
@@ -61,7 +62,19 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"doyen.demo\",\n  \"password\": \"demo1234\",\n  \"role\": \"DOYEN\",\n  \"adminCode\": \"pfa-doyen-2026\"\n}"
+              "raw": "{\n  \"username\": \"doyen.demo\",\n  \"email\": \"karim.benali.fst@uhp.ac.ma\",\n  \"password\": \"demo1234\",\n  \"role\": \"DOYEN\",\n  \"adminCode\": \"pfa-doyen-2026\"\n}"
+            },
+            "url": "{{authUrl}}/auth/register"
+          }
+        },
+        {
+          "name": "Register - Club (code + club requis)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"club.robo\",\n  \"email\": \"club.robo.fst@uhp.ac.ma\",\n  \"password\": \"club1234\",\n  \"role\": \"CLUB\",\n  \"adminCode\": \"pfa-club-2026\",\n  \"club\": \"CLIC\"\n}"
             },
             "url": "{{authUrl}}/auth/register"
           }
@@ -86,7 +99,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"username\": \"{{username}}\",\n  \"password\": \"prof123\"\n}"
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"prof123\"\n}"
             },
             "url": "{{authUrl}}/auth/login"
           }
@@ -105,7 +118,7 @@
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"{{username}}\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{email}}\"\n}" },
             "url": "{{authUrl}}/auth/forgot"
           }
         },
@@ -134,7 +147,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"username\": \"nouveau.prof\",\n  \"password\": \"prof123\",\n  \"role\": \"PROF\",\n  \"firstName\": \"Salma\",\n  \"lastName\": \"El Idrissi\",\n  \"filiere\": \"Informatique\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"username\": \"nouveau.prof\",\n  \"password\": \"prof123\",\n  \"role\": \"PROF\",\n  \"firstName\": \"Salma\",\n  \"lastName\": \"El Idrissi\",\n  \"filiere\": \"GI\"\n}" },
             "url": "{{authUrl}}/auth/users"
           }
         },
@@ -158,7 +171,7 @@
               { "key": "Content-Type", "value": "application/json" },
               { "key": "Authorization", "value": "Bearer {{token}}" }
             ],
-            "body": { "mode": "raw", "raw": "{\n  \"filiere\": \"Informatique\"\n}" },
+            "body": { "mode": "raw", "raw": "{\n  \"filiere\": \"GI\"\n}" },
             "url": "{{authUrl}}/auth/users/2/filiere"
           }
         }
@@ -185,7 +198,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Salle de cours A103\",\n  \"category\": \"SALLE\",\n  \"capacity\": 50,\n  \"building\": \"Bâtiment A\",\n  \"floor\": \"1er étage\",\n  \"equipment\": \"Vidéoprojecteur, tableau blanc\",\n  \"price\": 0\n}"
+              "raw": "{\n  \"name\": \"Salle A01\",\n  \"category\": \"TD\",\n  \"type\": \"TD\",\n  \"capacity\": 40,\n  \"building\": \"Bloc A\",\n  \"floor\": \"RDC\",\n  \"equipment\": \"Projecteur, Tableau blanc\",\n  \"equipments\": [\"Projecteur\", \"Tableau blanc\"],\n  \"price\": 0\n}"
             },
             "url": "{{bookingUrl}}/resources"
           }
@@ -200,7 +213,7 @@
           "request": {
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
-            "url": "{{bookingUrl}}/bookings/availability?resource=Salle%20de%20cours%20A101&date=2026-10-01&creneau=08:30-10:30"
+            "url": "{{bookingUrl}}/bookings/availability?resource=Amphi%201&date=2026-10-01&creneau=08:30-10:30"
           }
         },
         {
@@ -213,9 +226,17 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"resource\": \"Salle de cours A101\",\n  \"date\": \"2026-10-01\",\n  \"creneau\": \"08:30-10:30\",\n  \"username\": \"{{username}}\",\n  \"filiere\": \"Informatique\",\n  \"motif\": \"Cours de développement web\"\n}"
+              "raw": "{\n  \"resource\": \"Amphi 1\",\n  \"date\": \"2026-10-01\",\n  \"creneau\": \"08:30-10:30\",\n  \"username\": \"{{username}}\",\n  \"filiere\": \"GI\",\n  \"motif\": \"Cours de développement web\"\n}"
             },
             "url": "{{bookingUrl}}/bookings"
+          }
+        },
+        {
+          "name": "Calendar (jour / semaine / mois)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/calendar?from=2026-10-01&to=2026-10-07&resource=Amphi%201&filiere=GI"
           }
         },
         {
@@ -276,6 +297,14 @@
             "method": "GET",
             "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
             "url": "{{bookingUrl}}/bookings/{{bookingId}}/document"
+          }
+        },
+        {
+          "name": "Download signed document (evenement club)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+            "url": "{{bookingUrl}}/bookings/{{bookingId}}/signed-document"
           }
         },
         {

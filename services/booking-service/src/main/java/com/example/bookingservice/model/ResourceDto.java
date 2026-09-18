@@ -1,14 +1,19 @@
 package com.example.bookingservice.model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ResourceDto {
     private Long id;
     private String name;
     private String category;
+    private String type;
     private Integer capacity;
     private String location;
     private String building;
     private String floor;
     private String equipment;
+    private List<String> equipments = new ArrayList<>();
     private String photo;
     private Double price;
 
@@ -18,6 +23,8 @@ public class ResourceDto {
     public void setName(String name) { this.name = name; }
     public String getCategory() { return category; }
     public void setCategory(String category) { this.category = category; }
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
     public Integer getCapacity() { return capacity; }
     public void setCapacity(Integer capacity) { this.capacity = capacity; }
     public String getLocation() { return location; }
@@ -28,6 +35,8 @@ public class ResourceDto {
     public void setFloor(String floor) { this.floor = floor; }
     public String getEquipment() { return equipment; }
     public void setEquipment(String equipment) { this.equipment = equipment; }
+    public List<String> getEquipments() { return equipments; }
+    public void setEquipments(List<String> equipments) { this.equipments = equipments; }
     public String getPhoto() { return photo; }
     public void setPhoto(String photo) { this.photo = photo; }
     public Double getPrice() { return price; }

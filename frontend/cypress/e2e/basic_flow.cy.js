@@ -2,13 +2,14 @@ describe('Basic reservation flow (API)', () => {
   const authUrl = Cypress.env('AUTH_URL') || 'http://localhost:8081';
   const bookingUrl = Cypress.env('BOOKING_URL') || 'http://localhost:8082';
   const username = `e2e_user_${Date.now()}`;
+  const email = `${username}@uhp.ac.ma`;
   const password = 'pass1234';
 
   it('registers, logs in, lists resources and attempts booking', () => {
     // Register
-    cy.request('POST', `${authUrl}/auth/register`, { username, password }).then(() => {
+    cy.request('POST', `${authUrl}/auth/register`, { username, email, password }).then(() => {
       // Login
-      cy.request('POST', `${authUrl}/auth/login`, { username, password }).then((loginRes) => {
+      cy.request('POST', `${authUrl}/auth/login`, { email, password }).then((loginRes) => {
         expect(loginRes.body).to.have.property('token');
         const token = loginRes.body.token;
         const authHeaders = { Authorization: `Bearer ${token}` };

@@ -66,7 +66,7 @@ export default function DashboardPage() {
           )}
           {(role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN') && (
             <Link to="/validations" className="btn btn-accent">
-              {approvals.length} demande{sapprovals.length > 1 ? 's' : ''} à valider
+              {approvals.length} demande{approvals.length > 1 ? 's' : ''} à valider
             </Link>
           )}
         </div>

@@ -48,12 +48,14 @@ class AuthServiceTest {
                 "test-admin-code",
                 "test-prof-code",
                 "test-chef-code",
-                "test-doyen-code");
+                "test-doyen-code",
+                "test-club-code");
     }
 
     @Test
     void register_createsNewUser_whenUsernameNotTaken() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("aya");
         request.setPassword("secret123");
         request.setRole("USER");
@@ -72,6 +74,7 @@ class AuthServiceTest {
     @Test
     void register_throwsConflict_whenUsernameAlreadyExists() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("aya");
         request.setPassword("secret123");
 
@@ -85,6 +88,7 @@ class AuthServiceTest {
     @Test
     void register_createsAdmin_whenAdminCodeIsCorrect() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("boss");
         request.setPassword("secret123");
         request.setRole("ADMIN");
@@ -102,6 +106,7 @@ class AuthServiceTest {
     @Test
     void register_throwsForbidden_whenAdminCodeIsWrong() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("boss");
         request.setPassword("secret123");
         request.setRole("ADMIN");
@@ -162,6 +167,7 @@ class AuthServiceTest {
     @Test
     void register_createsEtudiant_withoutCode() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("etudiant1");
         request.setPassword("secret123");
         request.setRole("ETUDIANT");
@@ -178,6 +184,7 @@ class AuthServiceTest {
     @Test
     void register_createsProf_whenProfCodeIsCorrect() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("prof1");
         request.setPassword("secret123");
         request.setRole("PROF");
@@ -200,6 +207,7 @@ class AuthServiceTest {
     @Test
     void register_throwsForbidden_whenProfCodeIsWrong() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("prof1");
         request.setPassword("secret123");
         request.setRole("PROF");
@@ -215,6 +223,7 @@ class AuthServiceTest {
     @Test
     void register_createsChefFiliere_whenChefCodeIsCorrectAndFiliereProvided() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("chef1");
         request.setPassword("secret123");
         request.setRole("CHEF_FILIERE");
@@ -234,6 +243,7 @@ class AuthServiceTest {
     @Test
     void register_throwsBadRequest_whenChefCodeGivenButNoFiliere() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("chef1");
         request.setPassword("secret123");
         request.setRole("CHEF_FILIERE");
@@ -249,6 +259,7 @@ class AuthServiceTest {
     @Test
     void register_createsDoyen_whenDoyenCodeIsCorrect() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("doyen1");
         request.setPassword("secret123");
         request.setRole("DOYEN");
@@ -266,6 +277,7 @@ class AuthServiceTest {
     @Test
     void register_throwsForbidden_whenDoyenCodeIsWrong() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("doyen1");
         request.setPassword("secret123");
         request.setRole("DOYEN");
@@ -281,12 +293,13 @@ class AuthServiceTest {
     @Test
     void createUser_createsAccount_withoutRegistrationCode() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("nouveau.prof");
         request.setPassword("secret123");
         request.setRole("PROF");
         request.setFirstName("Salma");
         request.setLastName("El Idrissi");
-        request.setFiliere("Informatique");
+        request.setFiliere("GI");
 
         when(userRepository.existsByUsername("nouveau.prof")).thenReturn(false);
         when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
@@ -297,12 +310,13 @@ class AuthServiceTest {
         assertThat(dto.getUsername()).isEqualTo("nouveau.prof");
         assertThat(dto.getRole()).isEqualTo("PROF");
         assertThat(dto.getFirstName()).isEqualTo("Salma");
-        assertThat(dto.getFiliere()).isEqualTo("Informatique");
+        assertThat(dto.getFiliere()).isEqualTo("GI");
     }
 
     @Test
     void createUser_throwsConflict_whenUsernameAlreadyExists() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("aya");
         request.setPassword("secret123");
 
@@ -316,6 +330,7 @@ class AuthServiceTest {
     @Test
     void createUser_throwsBadRequest_whenChefWithoutFiliere() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("chef2");
         request.setPassword("secret123");
         request.setRole("CHEF_FILIERE");
@@ -330,6 +345,7 @@ class AuthServiceTest {
     @Test
     void createUser_throwsBadRequest_whenInvalidRole() {
         RegisterRequest request = new RegisterRequest();
+        request.setEmail("etudiant.test@uhp.ac.ma");
         request.setUsername("weird");
         request.setPassword("secret123");
         request.setRole("SUPERUSER");
@@ -339,5 +355,80 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.createUser(request))
                 .isInstanceOf(ResponseStatusException.class)
                 .hasMessageContaining("Role invalide");
+    }
+
+    @Test
+    void register_createsClub_whenClubCodeAndClubProvided() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("club.clic");
+        request.setEmail("club.clic.fst@uhp.ac.ma");
+        request.setPassword("secret123");
+        request.setRole("CLUB");
+        request.setAdminCode("test-club-code");
+        request.setClub("CLIC");
+
+        when(userRepository.existsByUsername("club.clic")).thenReturn(false);
+        when(userRepository.save(org.mockito.ArgumentMatchers.any(AppUser.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        AuthResponse response = authService.register(request);
+
+        assertThat(response.getRole()).isEqualTo("CLUB");
+        assertThat(response.getClub()).isEqualTo("CLIC");
+    }
+
+    @Test
+    void register_throwsBadRequest_whenClubWithoutClubName() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("club.x");
+        request.setEmail("club.x.fst@uhp.ac.ma");
+        request.setPassword("secret123");
+        request.setRole("CLUB");
+        request.setAdminCode("test-club-code");
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Le club est requis");
+    }
+
+    @Test
+    void login_succeeds_withInstitutionalEmail() {
+        String rawPassword = "secret123";
+        AppUser storedUser = new AppUser("aya", passwordEncoder.encode(rawPassword), "USER");
+        storedUser.setEmail("aya.mouine.fst@uhp.ac.ma");
+
+        AuthRequest request = new AuthRequest();
+        request.setEmail("aya.mouine.fst@uhp.ac.ma");
+        request.setPassword(rawPassword);
+
+        when(userRepository.findByEmail("aya.mouine.fst@uhp.ac.ma")).thenReturn(Optional.of(storedUser));
+
+        AuthResponse response = authService.login(request);
+
+        assertThat(response.getUsername()).isEqualTo("aya");
+        assertThat(response.getEmail()).isEqualTo("aya.mouine.fst@uhp.ac.ma");
+    }
+
+    @Test
+    void register_throwsBadRequest_whenEmailIsNotInstitutional() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("aya");
+        request.setEmail("aya@gmail.com");
+        request.setPassword("secret123");
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("Email institutionnel invalide");
+    }
+
+    @Test
+    void register_throwsBadRequest_whenEmailIsMissing() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUsername("aya");
+        request.setPassword("secret123");
+
+        assertThatThrownBy(() -> authService.register(request))
+                .isInstanceOf(ResponseStatusException.class)
+                .hasMessageContaining("L'email institutionnel est requis");
     }
 }

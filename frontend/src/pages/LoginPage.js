@@ -7,7 +7,7 @@ const LOGO = 'https://www.fsts.ac.ma/images/fsts_logo.png';
 export default function LoginPage() {
   const { login, showToast } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ username: '', password: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -18,7 +18,7 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
-      const data = await login(form.username, form.password);
+      const data = await login(form.email, form.password);
       showToast(`Connecté(e) en tant que ${data.firstName || data.username}.`, 'success');
       navigate('/app');
     } catch (err) {
@@ -40,8 +40,17 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit}>
           <div className="field">
-            <label htmlFor="username">Nom d’utilisateur</label>
-            <input id="username" type="text" name="username" value={form.username} onChange={handleChange} required autoFocus />
+            <label htmlFor="email">Email institutionnel</label>
+            <input
+              id="email"
+              type="email"
+              name="email"
+              placeholder="prenom.nom.fst@uhp.ac.ma"
+              value={form.email}
+              onChange={handleChange}
+              required
+              autoFocus
+            />
           </div>
           <div className="field">
             <label htmlFor="password">Mot de passe</label>

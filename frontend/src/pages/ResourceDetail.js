@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getResources, createBooking } from '../api';
+import { getResources, createBooking, ROOM_TYPE_LABELS } from '../api';
 import Calendar from '../components/Calendar';
 import { useAuth } from '../AuthContext';
 
@@ -10,6 +10,8 @@ export default function ResourceDetail() {
   const { token, currentUser, showToast } = useAuth();
   const navigate = useNavigate();
   const isEtudiant = currentUser?.role === 'ETUDIANT';
+  const isClub = currentUser?.role === 'CLUB';
+  const [motif, setMotif] = useState('');
 
   useEffect(() => {
     getResources(token)
@@ -20,26 +22,43 @@ export default function ResourceDetail() {
       .catch(() => setResource({ name: decodeURIComponent(id) }));
   }, [id, token]);
 
-  const handleBook = async (resourceName, date) => {
+  const handleBook = async (resourceName, date, creneau) => {
     if (!token) return navigate('/login');
+    if (isClub && !motif.trim()) {
+      showToast("Indiquez l'objet de l'événement avant de réserver.", 'error');
+      throw new Error("Objet de l'événement requis");
+    }
     try {
       const data = await createBooking(token, {
         resource: resourceName,
         date,
+        creneau,
         username: currentUser.username,
+        filiere: isClub ? undefined : currentUser.filiere,
+        motif: motif || undefined,
+        bookingType: isClub ? 'EVENEMENT' : undefined,
+        club: isClub ? currentUser.club : undefined,
         status: 'pending',
       });
-      showToast(`Demande de réservation envoyée pour ${resourceName} le ${date}.`, 'success');
+      showToast(
+        isClub
+          ? `Demande d'événement envoyée au doyen pour ${resourceName} le ${date}${creneau ? ` (${creneau})` : ''}.`
+          : `Demande de réservation envoyée pour ${resourceName} le ${date}${creneau ? ` (${creneau})` : ''}.`,
+        'success'
+      );
       return data;
     } catch (err) {
       throw new Error(err?.message || 'Erreur lors de la réservation');
     }
   };
 
-  const catLabel = (c) => {
-    const map = { SALLE: 'Salle', TP: 'Salle TP', AMPHI: 'Amphithéâtre', REUNION: 'Salle de réunion', AUTRE: 'Autre' };
-    return map[c] || c || 'Salle';
+  const equipments = (r) => {
+    if (Array.isArray(r?.equipments) && r.equipments.length > 0) return r.equipments;
+    if (r?.equipment) return r.equipment.split(',').map((s) => s.trim()).filter(Boolean);
+    return [];
   };
+
+  const catLabel = (c) => ROOM_TYPE_LABELS[c] || c || 'Salle';
 
   return (
     <div className="page">
@@ -52,33 +71,44 @@ export default function ResourceDetail() {
         </div>
         {resource && (
           <div className="page-header-actions">
-            <span className="status-pill">{catLabel(resource.category)}</span>
+            <span className="status-pill">{catLabel(resource.type || resource.category)}</span>
             {resource.capacity && <span className="status-pill">👥 Capacité : {resource.capacity}</span>}
             <span className="status-pill">💰 {resource.price ? `${resource.price} MAD` : 'Gratuit'}</span>
           </div>
         )}
       </header>
 
-      {resource?.photo && (
-        <div className="resource-detail-photo">
-          <img src={resource.photo} alt={resource.name} />
-        </div>
-      )}
-
-      {resource?.equipment && (
+      {resource && equipments(resource).length > 0 && (
         <section className="card" style={{ marginTop: 18 }}>
           <h2>Équipements</h2>
-          <p>{resource.equipment}</p>
+          <div className="resource-meta" style={{ marginBottom: 0 }}>
+            {equipments(resource).map((e) => <span className="meta-chip" key={e}>{e}</span>)}
+          </div>
         </section>
       )}
 
       <section className="card" style={{ marginTop: 18 }}>
-        <h3>Disponibilité sur 14 jours</h3>
+        <h3>Disponibilité (jour / semaine / mois)</h3>
         <p className="small-muted">
           {isEtudiant
             ? 'Les étudiants consultent l’emploi du temps mais ne réservent pas.'
             : 'Cliquez sur un créneau libre pour demander une réservation.'}
         </p>
+        {!isEtudiant && (
+          <div className="field" style={{ marginBottom: 14 }}>
+            <label htmlFor="motif">
+              {isClub ? "Objet de l'événement (requis)" : 'Motif (optionnel)'}
+            </label>
+            <input
+              id="motif"
+              type="text"
+              value={motif}
+              onChange={(e) => setMotif(e.target.value)}
+              placeholder={isClub ? 'Ex. Hackathon CLIC 2026' : 'Ex. Cours de Bases de Données'}
+              required={isClub}
+            />
+          </div>
+        )}
         <Calendar
           resource={resource ? resource.name : decodeURIComponent(id)}
           onBook={isEtudiant ? null : handleBook}

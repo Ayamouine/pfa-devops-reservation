@@ -49,8 +49,8 @@ public class AuthController {
 
     @PostMapping("/forgot")
     public ResponseEntity<java.util.Map<String, String>> forgot(@RequestBody java.util.Map<String, String> body) {
-        String username = body.get("username");
-        String token = authService.createPasswordResetToken(username);
+        String identifier = body.get("email") != null ? body.get("email") : body.get("username");
+        String token = authService.createPasswordResetToken(identifier);
         // In real life, send by email. Here return token for demo.
         return ResponseEntity.ok(java.util.Map.of("resetToken", token));
     }

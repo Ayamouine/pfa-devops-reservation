@@ -25,8 +25,6 @@ class NotificationServiceTest {
     @BeforeEach
     void setUp() {
         notificationRepository = mock(NotificationRepository.class);
-        // Skip the built-in seed data so tests only see what they set up themselves.
-        when(notificationRepository.count()).thenReturn(1L);
         notificationService = new NotificationService(notificationRepository);
     }
 

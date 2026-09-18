@@ -11,6 +11,8 @@ public interface BookingRepository extends JpaRepository<BookingEntity, Long> {
     boolean existsByResourceAndReservationDate(String resource, LocalDate reservationDate);
     boolean existsByResourceAndReservationDateAndCreneau(String resource, LocalDate reservationDate, String creneau);
     List<BookingEntity> findByResource(String resource);
+    List<BookingEntity> findByReservationDate(LocalDate reservationDate);
+    List<BookingEntity> findByReservationDateBetween(LocalDate from, LocalDate to);
     List<BookingEntity> findByUsername(String username);
     List<BookingEntity> findByFiliere(String filiere);
     List<BookingEntity> findByStatus(String status);

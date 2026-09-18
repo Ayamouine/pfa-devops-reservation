@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
-import { FILIERES, ROLE_LABELS, getNotificationsForUser } from '../api';
+import { FILIERES_GROUPES, ROLE_LABELS, getNotificationsForUser } from '../api';
 
 const AVATAR_COLORS = ['#c78a3e', '#13315c', '#2f6f52', '#a6394a', '#3a5a8c', '#7a4e9e', '#c2622d'];
+
+const INSTITUTIONAL_EMAIL = /^[\w.+-]+@uhp\.ac\.ma$/i;
 
 export default function ProfilePage() {
   const { currentUser, token, showToast, saveProfile } = useAuth();
@@ -11,6 +13,7 @@ export default function ProfilePage() {
     firstName: currentUser?.firstName || '',
     lastName: currentUser?.lastName || '',
     username: currentUser?.username || '',
+    email: currentUser?.email || '',
     filiere: currentUser?.filiere || '',
     avatarColor: currentUser?.avatarColor || AVATAR_COLORS[0],
     currentPassword: '',
@@ -39,10 +42,15 @@ export default function ProfilePage() {
       showToast('Le mot de passe actuel est requis pour confirmer les changements.', 'error');
       return;
     }
+    if (form.email !== (currentUser.email || '') && !INSTITUTIONAL_EMAIL.test(form.email)) {
+      showToast('Email institutionnel invalide (format attendu : prenom.nom.fst@uhp.ac.ma)', 'error');
+      return;
+    }
     setSaving(true);
     try {
       await saveProfile(currentUser.username, {
         newUsername: form.username !== currentUser.username ? form.username : undefined,
+        newEmail: form.email !== (currentUser.email || '') ? form.email : undefined,
         currentPassword: form.currentPassword,
         newPassword: form.newPassword || undefined,
         firstName: form.firstName || undefined,
@@ -59,108 +67,140 @@ export default function ProfilePage() {
     }
   };
 
-  const canEditFiliere =
-    !['ADMIN', 'DOYEN'].includes(currentUser.role) || currentUser.filiere;
+  const canEditFiliere = !['ADMIN', 'DOYEN'].includes(currentUser.role);
 
-  const initials = ((form.firstName || currentUser.firstName || currentUser.username || '?')[0] +
-    (form.lastName || currentUser.lastName || '')[0]).toUpperCase();
+  const displayName =
+    [form.firstName, form.lastName].filter(Boolean).join(' ') || currentUser.username;
+  const initials =
+    ((form.firstName || currentUser.firstName || currentUser.username || '?')[0] +
+      (form.lastName || currentUser.lastName || '')[0]).toUpperCase();
 
   return (
     <div className="page">
       <header className="page-header">
         <h1 className="page-title">Mon profil</h1>
-        <p className="page-subtitle">Informations personnelles, filière et préférences.</p>
+        <p className="page-subtitle">Gérez vos informations, votre sécurité et vos préférences.</p>
       </header>
 
       <section className="card">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '18px', flexWrap: 'wrap' }}>
           <div
             style={{
-              width: 68,
-              height: 68,
+              width: 72,
+              height: 72,
               borderRadius: '50%',
               background: form.avatarColor,
               color: '#fff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '1.5rem',
+              fontSize: '1.6rem',
               fontWeight: 700,
+              flexShrink: 0,
             }}
           >
             {initials || '?'}
           </div>
-          <div>
-            <strong style={{ fontSize: '1.15rem' }}>
-              {[form.firstName, form.lastName].filter(Boolean).join(' ') || currentUser.username}
-            </strong>
-            <div style={{ marginTop: 4 }}>
+          <div style={{ flex: 1, minWidth: 200 }}>
+            <strong style={{ fontSize: '1.25rem' }}>{displayName}</strong>
+            <div style={{ marginTop: 6, display: 'flex', gap: 6, flexWrap: 'wrap' }}>
               <span className="role-tag">{ROLE_LABELS[currentUser.role] || currentUser.role}</span>
-              {currentUser.filiere && <span className="role-tag" style={{ marginLeft: 6 }}>{currentUser.filiere}</span>}
+              {currentUser.filiere && <span className="role-tag">{currentUser.filiere}</span>}
             </div>
+            <p className="small-muted" style={{ marginTop: 8 }}>
+              @{currentUser.username}
+              {currentUser.email ? ` · ${currentUser.email}` : ''}
+            </p>
           </div>
         </div>
+      </section>
 
-        <form onSubmit={handleSubmit}>
-          <div className="form-grid">
+      <form onSubmit={handleSubmit}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+            gap: '20px',
+            marginTop: 20,
+          }}
+        >
+          <section className="card" style={{ margin: 0 }}>
+            <h2>Informations personnelles</h2>
+            <div className="form-grid">
+              <div className="field">
+                <label htmlFor="firstName">Prénom</label>
+                <input id="firstName" type="text" name="firstName" value={form.firstName} onChange={handleChange} />
+              </div>
+              <div className="field">
+                <label htmlFor="lastName">Nom</label>
+                <input id="lastName" type="text" name="lastName" value={form.lastName} onChange={handleChange} />
+              </div>
+            </div>
+            {canEditFiliere && (
+              <div className="field">
+                <label htmlFor="filiere">Filière</label>
+                <select id="filiere" name="filiere" value={form.filiere} onChange={handleChange}>
+                  <option value="">— Sans filière —</option>
+                  {FILIERES_GROUPES.map((g) => (
+                    <optgroup key={g.groupe} label={g.groupe}>
+                      {g.filieres.map((f) => <option value={f} key={f}>{f}</option>)}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            )}
             <div className="field">
-              <label htmlFor="firstName">Prénom</label>
-              <input id="firstName" type="text" name="firstName" value={form.firstName} onChange={handleChange} />
+              <label>Couleur de l’avatar</label>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {AVATAR_COLORS.map((c) => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, avatarColor: c }))}
+                    style={{
+                      width: 30,
+                      height: 30,
+                      borderRadius: '50%',
+                      background: c,
+                      cursor: 'pointer',
+                      border: form.avatarColor === c ? '3px solid #1b232e' : '1px solid rgba(0,0,0,0.15)',
+                    }}
+                    aria-label={`Couleur ${c}`}
+                  />
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="card" style={{ margin: 0 }}>
+            <h2>Sécurité du compte</h2>
+            <div className="field">
+              <label htmlFor="email">Email institutionnel</label>
+              <input id="email" type="email" name="email" value={form.email} onChange={handleChange} />
             </div>
             <div className="field">
-              <label htmlFor="lastName">Nom</label>
-              <input id="lastName" type="text" name="lastName" value={form.lastName} onChange={handleChange} />
+              <label htmlFor="username">Nom d’utilisateur</label>
+              <input id="username" type="text" name="username" value={form.username} onChange={handleChange} required />
             </div>
-          </div>
-          {canEditFiliere && (
             <div className="field">
-              <label htmlFor="filiere">Filière</label>
-              <select id="filiere" name="filiere" value={form.filiere} onChange={handleChange}>
-                <option value="">— Sans filière —</option>
-                {FILIERES.map((f) => <option value={f} key={f}>{f}</option>)}
-              </select>
+              <label htmlFor="currentPassword">Mot de passe actuel (requis pour confirmer)</label>
+              <input id="currentPassword" type="password" name="currentPassword" value={form.currentPassword} onChange={handleChange} required />
             </div>
-          )}
-          <div className="field">
-            <label htmlFor="username">Nom d’utilisateur</label>
-            <input id="username" type="text" name="username" value={form.username} onChange={handleChange} required />
-          </div>
-          <div className="field">
-            <label>Couleur de l’avatar</label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              {AVATAR_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, avatarColor: c }))}
-                  style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: '50%',
-                    background: c,
-                    cursor: 'pointer',
-                    border: form.avatarColor === c ? '3px solid #1b232e' : '1px solid rgba(0,0,0,0.15)',
-                  }}
-                  aria-label={`Couleur ${c}`}
-                />
-              ))}
+            <div className="field">
+              <label htmlFor="newPassword">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
+              <input id="newPassword" type="password" name="newPassword" value={form.newPassword} onChange={handleChange} />
             </div>
-          </div>
-          <div className="field">
-            <label htmlFor="currentPassword">Mot de passe actuel (requis pour confirmer)</label>
-            <input id="currentPassword" type="password" name="currentPassword" value={form.currentPassword} onChange={handleChange} required />
-          </div>
-          <div className="field">
-            <label htmlFor="newPassword">Nouveau mot de passe (laisser vide pour ne pas changer)</label>
-            <input id="newPassword" type="password" name="newPassword" value={form.newPassword} onChange={handleChange} />
-          </div>
+          </section>
+        </div>
+
+        <div style={{ marginTop: 20 }}>
           <button type="submit" className="btn btn-accent" disabled={saving}>
             {saving ? 'Enregistrement…' : 'Enregistrer les modifications'}
           </button>
-        </form>
-      </section>
+        </div>
+      </form>
 
-      <section className="card">
+      <section className="card" style={{ marginTop: 20 }}>
         <h2>Dernières notifications</h2>
         {notifications.length === 0 ? (
           <p className="empty-state">

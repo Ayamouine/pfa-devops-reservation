@@ -24,6 +24,7 @@ describe('Workflow de validation 3 niveaux (Prof -> Chef -> Doyen)', () => {
     // par les DataLoader pour prof/chef/doyen).
     cy.request('POST', `${authUrl}/auth/register`, {
       username: adminUsername,
+      email: `${adminUsername}@uhp.ac.ma`,
       password: adminPassword,
       role: 'ADMIN',
       adminCode: 'pfa-admin-2026',
@@ -60,7 +61,7 @@ describe('Workflow de validation 3 niveaux (Prof -> Chef -> Doyen)', () => {
           date: day(30),
           creneau: '08:30-10:30',
           username: 'prof',
-          filiere: 'Informatique',
+          filiere: 'GI',
           motif: 'Cours E2E',
         },
       }).then((res) => {
@@ -152,7 +153,7 @@ describe('Workflow de validation 3 niveaux (Prof -> Chef -> Doyen)', () => {
           date: day(45),
           creneau: '10:30-12:30',
           username: 'prof',
-          filiere: 'Informatique',
+          filiere: 'GI',
           motif: 'Cours refusé E2E',
         },
       }).then((res) => {

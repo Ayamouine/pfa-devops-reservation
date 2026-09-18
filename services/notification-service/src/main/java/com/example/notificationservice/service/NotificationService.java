@@ -20,10 +20,6 @@ public class NotificationService {
 
     public NotificationService(NotificationRepository notificationRepository) {
         this.notificationRepository = notificationRepository;
-        if (notificationRepository.count() == 0) {
-            notificationRepository.save(new Notification("aya", "Rappel: reservation confirmee", "sent"));
-            notificationRepository.save(new Notification("mouine", "Rappel: reservation a venir", "pending"));
-        }
     }
 
     public List<Notification> getAllNotifications() {
