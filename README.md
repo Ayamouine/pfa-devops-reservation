@@ -135,6 +135,19 @@ REACT_APP_NOTIFICATION_URL=http://localhost:18083
 REACT_APP_PAYMENT_URL=http://localhost:8084
 ```
 
+## Supervision (Prometheus + Grafana)
+
+Chaque microservice expose des métriques au format Prometheus via Spring Boot Actuator
+(`/actuator/prometheus`) : JVM heap, CPU process, threads, requêtes HTTP, etc.
+
+- Prometheus : `http://localhost:9090` (scrape des 4 services, config dans `monitoring/prometheus/`)
+- Grafana : `http://localhost:3000` (admin / admin) — datasource et dashboard provisionnés automatiquement
+  (`monitoring/grafana/provisioning/`), dashboard « PFA Réservation — Supervision ».
+
+En Kubernetes, les ressources `prometheus` et `grafana` sont déployées avec `k8s/prometheus.yaml`
+et `k8s/grafana.yaml` (ConfigMaps + Deployment + Service), et le job CI `deploy-kind` vérifie leur
+health (`/-/ready`, `/api/health`).
+
 ## Tests
 
 - Unitaires + intégration (Maven) : `mvn -B verify` dans chaque service ; un test de concurrence
@@ -149,12 +162,12 @@ Importer `docs/postman_collection.json` (variables `token`, `bookingId`, etc. g�
 
 1. Architecture & diagrammes UML (`docs/UML.md`) — 1 min
 2. Démo : accueil public → inscription/login → demande de réservation (prof) → validation (chef) → cachet + paiement (doyen) → notifications — 2 min 30
-3. CI/CD et déploiement K8s — 1 min
+3. CI/CD, déploiement K8s et supervision Prometheus/Grafana — 1 min
 4. Conclusion et améliorations possibles — 30 s
 
 ## Prochaines étapes recommandées
 
-- Monitoring (Prometheus + Grafana)
 - Envoi d'e-mails réel pour vérification et rappels
 - Génération de factures PDF signées
 - Tests de charge sur la contrainte anti double-réservation
+- Alerting Prometheus (Alertmanager + règles de seuils) et dashboards Grafana avancés

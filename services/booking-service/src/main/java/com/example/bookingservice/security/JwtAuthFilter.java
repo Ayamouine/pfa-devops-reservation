@@ -34,7 +34,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
 
         boolean isPreflight = "OPTIONS".equalsIgnoreCase(method);
-        boolean isHealth = path.endsWith("/health");
+        boolean isHealth = path.endsWith("/health") || path.contains("/actuator");
 
         if (isPreflight || isHealth) {
             filterChain.doFilter(request, response);

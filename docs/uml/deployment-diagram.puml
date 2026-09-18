@@ -1,0 +1,50 @@
+@startuml
+node "Cluster Kubernetes (noeud unique - kind)" {
+  component "Pod frontend" as FE [
+    Conteneur React
+    port 3000
+  ]
+  component "Pod auth-service" as AS [
+    Conteneur Spring Boot
+    port 8081
+  ]
+  component "Pod booking-service" as BS [
+    Conteneur Spring Boot
+    port 8082
+  ]
+  component "Pod notification-service" as NS [
+    Conteneur Spring Boot
+    port 8083
+  ]
+  component "Pod payment-service" as PS [
+    Conteneur Spring Boot
+    port 8084
+  ]
+  database MySQL as DB [
+    MySQL 8.0
+    auth_db / booking_db
+    payment_db / notification_db
+  ]
+  component "Secret pfa-secrets" as SEC
+}
+
+node "Navigateur de l'utilisateur" as CLIENT
+
+CLIENT --> FE : "LoadBalancer :3002"
+FE --> AS : "LoadBalancer :18081"
+FE --> BS : "LoadBalancer :8082"
+FE --> NS : "LoadBalancer :18083"
+FE --> PS : "LoadBalancer :8084"
+
+AS --> DB : "ClusterIP :3306"
+BS --> DB : "ClusterIP :3306"
+NS --> DB : "ClusterIP :3306"
+PS --> DB : "ClusterIP :3306"
+
+BS ..> NS : "appel interne HTTP"
+BS ..> PS : "appel interne HTTP"
+SEC ..> AS : "variables d'env"
+SEC ..> BS : "variables d'env"
+SEC ..> NS : "variables d'env"
+SEC ..> PS : "variables d'env"
+@enduml

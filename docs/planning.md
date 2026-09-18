@@ -34,7 +34,12 @@
 - Déploiement sur Kubernetes
 - Gestion des services et des volumes
 
-## Phase 8 — Tests et documentation
-- Validation fonctionnelle
+## Phase 8 — Supervision
+- Exposition des métriques des microservices (Spring Boot Actuator, format Prometheus)
+- Déploiement de Prometheus + Grafana (Docker Compose et Kubernetes)
+- Dashboard « PFA Réservation — Supervision »
+
+## Phase 9 — Tests et documentation
+- Validation fonctionnelle (tests unitaires, intégration, E2E Cypress)
 - Rédaction du rapport final
 - Préparation de la soutenance

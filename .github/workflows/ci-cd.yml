@@ -212,7 +212,7 @@ jobs:
 
       - name: Wait for rollouts
         run: |
-          for name in mysql auth-service booking-service notification-service payment-service frontend; do
+          for name in mysql auth-service booking-service notification-service payment-service frontend prometheus grafana; do
             kubectl rollout status deployment/$name --timeout=420s
           done
 
@@ -222,7 +222,7 @@ jobs:
           {
             echo "=== pods ==="
             kubectl get pods -o wide || true
-            for name in mysql auth-service booking-service notification-service payment-service frontend; do
+            for name in mysql auth-service booking-service notification-service payment-service frontend prometheus grafana; do
               echo "=== deployment $name (describe status) ==="
               kubectl get deployment "$name" -o wide 2>&1 || true
               echo "=== $name logs (tail 25) ==="
@@ -247,6 +247,10 @@ jobs:
             curl -sf http://notification-service:8083/notifications/health
             echo
             curl -sf http://payment-service:8084/payments/health
+            echo
+            curl -sf http://prometheus:9090/-/ready
+            echo
+            curl -sf http://grafana:3000/api/health
             echo
             echo "All services are up."
           '

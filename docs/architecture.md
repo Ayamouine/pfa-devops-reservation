@@ -31,6 +31,13 @@ La plateforme est conçue selon une architecture microservices afin de séparer 
 ### 5. Payment Service
 - Simule le paiement, déclenché automatiquement à la confirmation (cachet du doyen).
 
+### 6. Monitoring (Prometheus + Grafana)
+- Les 4 microservices exposent leurs métriques application (JVM, CPU, threads, requêtes HTTP)
+  via Spring Boot Actuator (`/actuator/prometheus`).
+- Prometheus collecte ces métriques (fichier `monitoring/prometheus/prometheus.yml`).
+- Grafana affiche un dashboard provisionné automatiquement (« PFA Réservation — Supervision »,
+  `monitoring/grafana/`).
+
 ## Rôles et workflow
 
 | Rôle | Actions principales |
@@ -49,11 +56,13 @@ Chaque microservice possède sa propre base de données MySQL pour garantir l’
 ## Déploiement
 
 - Docker pour la conteneurisation
-- Docker Compose pour l’environnement local
+- Docker Compose pour l’environnement local (y compris Prometheus + Grafana)
 - Kubernetes pour l’orchestration en production
 - GitHub Actions pour l’intégration continue et le déploiement automatique
 
-## Diagrammes à prévoir
+## Diagrammes UML
+
+Réalisés dans `docs/uml/` et présentés en Mermaid dans `docs/UML.md` :
 
 - Diagramme de cas d’utilisation
 - Diagramme de classes

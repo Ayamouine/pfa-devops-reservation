@@ -1,0 +1,45 @@
+@startuml
+title Diagramme de sequence - Workflow de reservation a 3 niveaux
+
+actor "Professeur" as P
+actor "Chef de filiere" as C
+actor "Doyen" as D
+participant "Navigateur\n(React)" as FE
+entity "Auth\nService" as AS
+entity "Booking\nService" as BS
+entity "Payment\nService" as PS
+entity "Notification\nService" as NS
+database "MySQL" as MySQL
+
+P -> FE : login (email, mot de passe)
+FE -> AS : POST /auth/login
+AS --> FE : 200 + JWT (username, role, filiere)
+
+P -> FE : formulaire de reservation (salle, date, creneau, motif, filiere)
+FE -> BS : POST /bookings (Bearer JWT)
+BS -> MySQL : verifie unicite (resource, date, creneau)
+alt creneau occupe
+    MySQL --> BS : 0 ligne
+    BS --> FE : 409 Conflit
+else creneau libre
+    MySQL --> BS : 0 ligne
+    BS -> MySQL : INSERT booking (status = PENDING)
+    BS -> NS : notification au chef de filiere
+    BS --> FE : 201 + booking (PENDING)
+end
+
+C -> FE : approuve la demande
+FE -> BS : POST /bookings/{id}/approve
+BS -> MySQL : UPDATE status = APPROVED
+BS -> NS : notification au doyen
+BS --> FE : 200 + booking (APPROVED)
+
+D -> FE : confirme (cachet) + signe le PDF
+FE -> BS : POST /bookings/{id}/confirm
+BS -> MySQL : UPDATE status = CONFIRMED
+BS -> PS : POST /payments (paiement simule)
+PS --> BS : 200 + payment (PAID)
+BS -> NS : notification au demandeur (reservation confirmee)
+BS --> FE : 200 + booking (CONFIRMED)
+
+@enduml

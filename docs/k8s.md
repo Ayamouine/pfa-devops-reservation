@@ -20,7 +20,8 @@ kubectl create secret generic pfa-secrets \
   --from-literal=SPRING_DATASOURCE_PASSWORD=change_me \
   --from-literal=JWT_SECRET=change_me
 
-# 2. Appliquer les manifests
+# 2. Appliquer les manifests (inclut la supervision :
+#    k8s/prometheus.yaml + k8s/grafana.yaml avec leurs ConfigMaps)
 kubectl apply -f k8s/
 
 # 3. Pointer les images vers votre registre (si le registre GHCR est privé :
@@ -31,6 +32,13 @@ kubectl set image deployment/auth-service \
 # 4. Vérifier
 kubectl get pods -n default
 kubectl rollout status deployment/auth-service
+```
+
+# 5. Supervision
+#    Prometheus : http://localhost:9090 (port-forward du service prometheus)
+#    Grafana    : http://localhost:3000 (admin/admin, port-forward du service grafana)
+kubectl port-forward svc/prometheus 9090:9090 &
+kubectl port-forward svc/grafana 3000:3000 &
 ```
 
 Accès local : le LoadBalancer ne livre pas de IP sur kind, utiliser
