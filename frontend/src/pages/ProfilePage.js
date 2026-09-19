@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../AuthContext';
 import { FILIERES_GROUPES, ROLE_LABELS, getNotificationsForUser } from '../api';
 
-const AVATAR_COLORS = ['#c78a3e', '#13315c', '#2f6f52', '#a6394a', '#3a5a8c', '#7a4e9e', '#c2622d'];
+const AVATAR_COLORS = ['#c78a3e', '#66bb6a', '#2f6f52', '#a6394a', '#5c9e6a', '#7a4e9e', '#c2622d'];
 
 const INSTITUTIONAL_EMAIL = /^[\w.+-]+@uhp\.ac\.ma$/i;
 

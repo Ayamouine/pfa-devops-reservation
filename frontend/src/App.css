@@ -7,12 +7,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --ink: #0b2545;
-    --primary: #13315c;
-    --primary-light: #1b4a8a;
+    --ink: #1B5E20;
+    --primary: #2E7D32;
+    --primary-light: #4CAF50;
     --accent: #c78a3e;
     --accent-dark: #a86f26;
-    --accent-light: #e8c98a;
+    --accent-light: #A5D6A7;
     --paper: #f4f6f9;
     --card: #ffffff;
     --text: #1b232e;
@@ -102,7 +102,7 @@ svg { vertical-align: middle; }
     position: sticky;
     top: 0;
     height: 100vh;
-    background: linear-gradient(180deg, #0b2545 0%, #13315c 100%);
+    background: linear-gradient(180deg, #1B5E20 0%, #2E7D32 100%);
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -640,7 +640,7 @@ svg { vertical-align: middle; }
 .status-free { --cal-color: #2f6f52; --cal-bg: #e8f2ec; }
 .status-pending { --cal-color: #b8860b; --cal-bg: #fdf6e3; }
 .status-busy { --cal-color: #a6394a; --cal-bg: #f9e8ea; }
-.status-confirmed { --cal-color: #1e5f8f; --cal-bg: #e6f0f8; }
+.status-confirmed { --cal-color: #1e5f8f; --cal-bg: #E8F5E9; }
 
 .calendar-nav { display: flex; align-items: center; gap: 8px; }
 .calendar-title { margin-left: 10px; font-weight: 600; text-transform: capitalize; }
@@ -760,7 +760,7 @@ svg { vertical-align: middle; }
 .field textarea:focus {
     outline: none;
     border-color: var(--primary-light);
-    box-shadow: 0 0 0 3px rgba(27, 74, 138, 0.14);
+    box-shadow: 0 0 0 3px rgba(46, 125, 50, 0.14);
 }
 
 .field select { appearance: auto; }
@@ -887,7 +887,7 @@ svg { vertical-align: middle; }
 
 .notif-item:hover { box-shadow: var(--shadow-sm); }
 
-.notif-item.unread { background: #f2f7ff; border-color: #c9dcf5; }
+.notif-item.unread { background: #F1F8E9; border-color: #A5D6A7; }
 
 .notif-icon {
     width: 40px; height: 40px;
@@ -1046,10 +1046,10 @@ svg { vertical-align: middle; }
     font-weight: 600;
 }
 
-.planning-table .today-col { background: #f2f7ff; }
+.planning-table .today-col { background: #F1F8E9; }
 
 .cours-cell {
-    background: #eef4ff;
+    background: #F1F8E9;
     border-left: 4px solid var(--primary-light);
     border-radius: 6px;
     padding: 7px 9px;
