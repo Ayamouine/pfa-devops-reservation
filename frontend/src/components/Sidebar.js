@@ -23,8 +23,6 @@ export default function Sidebar() {
 
   if (!currentUser) return null;
 
-  const linkCls = ({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}` as const;
-  const linkCls = ({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`;
   const linkCls = ({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`;
 
   return (
