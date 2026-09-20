@@ -144,31 +144,33 @@ export default function ApprovalsPage() {
               </div>
             )}
 
-            <div className="approval-actions">
-              {!isDoyen ? (
-                <>
-                  <button className="btn btn-primary" type="button" onClick={() => handleApprove(b)} disabled={busy === b.id}>
-                    {busy === b.id ? '…' : '✓ Valider pour le doyen'}
-                  </button>
-                  <button className="btn btn-danger-outline" type="button" onClick={() => setCommentOpen(commentOpen === b.id ? null : b.id)}>
-                    Refuser
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button className="btn btn-primary" type="button" onClick={() => handleStamp(b)} disabled={busy === b.id}>
-                    {busy === b.id
-                      ? '…'
-                      : b.bookingType === 'EVENEMENT'
-                        ? '✍ Signer l’autorisation d’événement'
-                        : '🕮 Apposer le cachet (Confirmer)'}
-                  </button>
-                  <button className="btn btn-danger-outline" type="button" onClick={() => setCommentOpen(commentOpen === b.id ? null : b.id)}>
-                    Refuser malgré la validation
-                  </button>
-                </>
-              )}
-            </div>
+            {b.status === 'PENDING' && (
+              <div className="approval-actions">
+                {!isDoyen ? (
+                  <>
+                    <button className="btn btn-primary" type="button" onClick={() => handleApprove(b)} disabled={busy === b.id}>
+                      {busy === b.id ? '…' : '✓ Valider pour le doyen'}
+                    </button>
+                    <button className="btn btn-danger-outline" type="button" onClick={() => setCommentOpen(commentOpen === b.id ? null : b.id)}>
+                      Refuser
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="btn btn-primary" type="button" onClick={() => handleStamp(b)} disabled={busy === b.id}>
+                      {busy === b.id
+                        ? '…'
+                        : b.bookingType === 'EVENEMENT'
+                          ? '✍ Signer l’autorisation d’événement'
+                          : '🕮 Apposer le cachet (Confirmer)'}
+                    </button>
+                    <button className="btn btn-danger-outline" type="button" onClick={() => setCommentOpen(commentOpen === b.id ? null : b.id)}>
+                      Refuser
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             {commentOpen === b.id && (
               <div className="approval-actions">
