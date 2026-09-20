@@ -22,6 +22,52 @@ export const ROLE_LABELS = {
   USER: 'Utilisateur',
 };
 
+export const ROLE_MENUS = {
+  ETUDIANT: [
+    { to: '/', label: 'Tableau de bord', icon: 'dashboard', end: true },
+    { to: '/ressources', label: 'Salles', icon: 'resources', end: false },
+    { to: '/calendar', label: 'Emploi du temps', icon: 'calendar', end: false },
+    { to: '/notifications', label: 'Notifications', icon: 'notifications', badge: 'unread' },
+    { to: '/profil', label: 'Profil', icon: 'profile', end: false },
+  ],
+  PROF: [
+    { to: '/', label: 'Tableau de bord', icon: 'dashboard', end: true },
+    { to: '/reservations', label: 'Mes réservations', icon: 'bookings', end: false },
+    { to: '/ressources', label: 'Salles', icon: 'resources', end: false },
+    { to: '/notifications', label: 'Notifications', icon: 'notifications', badge: 'unread' },
+    { to: '/profil', label: 'Profil', icon: 'profile', end: false },
+  ],
+  CHEF_FILIERE: [
+    { to: '/', label: 'Tableau de bord', icon: 'dashboard', end: true },
+    { to: '/validations', label: 'Validations', icon: 'approvals', end: false },
+    { to: '/ressources', label: 'Salles', icon: 'resources', end: false },
+    { to: '/notifications', label: 'Notifications', icon: 'notifications', badge: 'unread' },
+    { to: '/profil', label: 'Profil', icon: 'profile', end: false },
+  ],
+  DOYEN: [
+    { to: '/', label: 'Tableau de bord', icon: 'dashboard', end: true },
+    { to: '/validations', label: 'Validations (cachet)', icon: 'approvals', end: false },
+    { to: '/ressources', label: 'Salles', icon: 'resources', end: false },
+    { to: '/notifications', label: 'Notifications', icon: 'notifications', badge: 'unread' },
+    { to: '/profil', label: 'Profil', icon: 'profile', end: false },
+  ],
+  CLUB: [
+    { to: '/', label: 'Tableau de bord', icon: 'dashboard', end: true },
+    { to: '/demandes', label: 'Mes demandes', icon: 'bookings', end: false },
+    { to: '/ressources', label: 'Salles', icon: 'resources', end: false },
+    { to: '/notifications', label: 'Notifications', icon: 'notifications', badge: 'unread' },
+    { to: '/profil', label: 'Profil', icon: 'profile', end: false },
+  ],
+  ADMIN: [
+    { to: '/', label: 'Tableau de bord', icon: 'dashboard', end: true },
+    { to: '/admin', label: 'Administration', icon: 'admin', end: false },
+    { to: '/admin/utilisateurs', label: 'Utilisateurs', icon: 'users', end: false },
+    { to: '/admin/ressources', label: 'Ressources', icon: 'resources', end: false },
+    { to: '/notifications', label: 'Notifications', icon: 'notifications', badge: 'unread' },
+    { to: '/profil', label: 'Profil', icon: 'profile', end: false },
+  ],
+};
+
 export const REGISTRATION_CODES = {
   ETUDIANT: null,
   PROF: 'pfa-prof-2026',
