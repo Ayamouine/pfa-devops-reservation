@@ -1,4 +1,4 @@
-const AUTH_URL = process.env.REACT_APP_AUTH_URL || 'http://localhost:8081';
+const AUTH_URL = process.env.REACT_APP_AUTH_URL || 'http://localhost:18081';
 
 const EMAIL_RE = /^[a-z]{2,}\.[a-z]{2,}\.[a-z]{2,}@uhp\.ac\.ma$/;
 
@@ -8,42 +8,44 @@ const DEMO_USERS = [
     email: 'demo.etudiant.fst@uhp.ac.ma',
     password: 'Demo-2026!',
     role: 'ETUDIANT',
-    registrationCode: null,
+    adminCode: null,
   },
   {
     username: 'demo.prof',
     email: 'demo.prof.fst@uhp.ac.ma',
     password: 'Demo-2026!',
     role: 'PROF',
-    registrationCode: 'pfa-prof-2026',
+    adminCode: 'pfa-prof-2026',
   },
   {
     username: 'demo.cheffiliere',
     email: 'demo.cheffiliere.fst@uhp.ac.ma',
     password: 'Demo-2026!',
     role: 'CHEF_FILIERE',
-    registrationCode: 'pfa-chef-2026',
+    adminCode: 'pfa-chef-2026',
+    filiere: 'Génie Informatique',
   },
   {
     username: 'demo.doyen',
     email: 'demo.doyen.fst@uhp.ac.ma',
     password: 'Demo-2026!',
     role: 'DOYEN',
-    registrationCode: 'pfa-doyen-2026',
+    adminCode: 'pfa-doyen-2026',
   },
   {
     username: 'demo.club',
     email: 'demo.club.fst@uhp.ac.ma',
     password: 'Demo-2026!',
     role: 'CLUB',
-    registrationCode: 'pfa-club-2026',
+    adminCode: 'pfa-club-2026',
+    club: 'CLIC',
   },
   {
     username: 'demo.admin',
     email: 'demo.admin.fst@uhp.ac.ma',
     password: 'Demo-2026!',
     role: 'ADMIN',
-    registrationCode: 'pfa-admin-2026',
+    adminCode: 'pfa-admin-2026',
   },
 ];
 
