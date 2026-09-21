@@ -188,6 +188,14 @@ export function statusLabel(status) {
   return 'En attente';
 }
 
+export function statusLabelFor(booking) {
+  const status = (booking?.status || '').toLowerCase();
+  if (status === 'approved' && (booking?.bookingType || '').toUpperCase() === 'EVENEMENT') {
+    return 'En attente du doyen';
+  }
+  return statusLabel(booking?.status);
+}
+
 export async function parseError(res) {
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {

@@ -8,6 +8,7 @@ import {
   unreadCount,
   statusClass,
   statusLabel,
+  statusLabelFor,
 } from '../api';
 
 export default function DashboardPage() {
@@ -121,7 +122,7 @@ export default function DashboardPage() {
                     <span className="ticket-resource">{b.resource}</span>
                     <span className="ticket-meta">{b.date} · {b.creneau}</span>
                   </div>
-                  <span className={`badge ${statusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                  <span className={`badge ${statusClass(b.status)}`}>{statusLabelFor(b)}</span>
                 </div>
               </div>
             ))}
