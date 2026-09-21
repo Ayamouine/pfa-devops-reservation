@@ -54,8 +54,8 @@ public class NotificationService {
         Set<Notification> result = new LinkedHashSet<>();
         result.addAll(notificationRepository.findByUsername(username));
         if (role != null && !role.isBlank()) {
-            if ("DOYEN".equalsIgnoreCase(role)) {
-                result.addAll(notificationRepository.findByTarget("ROLE:DOYEN"));
+            if ("DOYEN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role)) {
+                result.addAll(notificationRepository.findAll());
             } else {
                 result.addAll(notificationRepository.findByTarget("ROLE:" + role.toUpperCase()));
             }

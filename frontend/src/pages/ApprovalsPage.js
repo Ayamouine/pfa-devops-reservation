@@ -149,7 +149,7 @@ export default function ApprovalsPage() {
                 {!isDoyen ? (
                   <>
                     <button className="btn btn-primary" type="button" onClick={() => handleApprove(b)} disabled={busy === b.id}>
-                      {busy === b.id ? '…' : '✓ Valider pour le doyen'}
+                      {busy === b.id ? '…' : '✓ Valider'}
                     </button>
                     <button className="btn btn-danger-outline" type="button" onClick={() => setCommentOpen(commentOpen === b.id ? null : b.id)}>
                       Refuser
