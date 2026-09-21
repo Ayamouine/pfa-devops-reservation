@@ -7,17 +7,20 @@
 @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;0,900;1,400&family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-    --ink: #1B5E20;
-    --primary: #2E7D32;
-    --primary-light: #4CAF50;
-    --accent: #c78a3e;
-    --accent-dark: #a86f26;
-    --accent-light: #A5D6A7;
+    --ink: #00332C;
+    --primary: #00695C;
+    --primary-light: #00897B;
+    --accent: #F9A825;
+    --accent-dark: #F57F17;
+    --accent-light: #B2DFDB;
+    --bg: #E0F2F1;
+    --bg-soft: #F5FDFC;
+    --sidebar-bg: #00695C;
     --paper: #f4f6f9;
     --card: #ffffff;
     --text: #1b232e;
     --text-muted: #5c6872;
-    --border: #dde4ec;
+    --border: #B2DFDB;
     --danger: #a6394a;
     --danger-bg: #f9e8ea;
     --success: #2f6f52;
@@ -102,7 +105,7 @@ svg { vertical-align: middle; }
     position: sticky;
     top: 0;
     height: 100vh;
-    background: linear-gradient(180deg, #1B5E20 0%, #2E7D32 100%);
+    background: linear-gradient(180deg, #00332C 0%, #00695C 100%);
     color: #ffffff;
     display: flex;
     flex-direction: column;
@@ -887,7 +890,7 @@ svg { vertical-align: middle; }
 
 .notif-item:hover { box-shadow: var(--shadow-sm); }
 
-.notif-item.unread { background: #F1F8E9; border-color: #A5D6A7; }
+.notif-item.unread { background: #E0F2F1; border-color: #B2DFDB; }
 
 .notif-icon {
     width: 40px; height: 40px;
@@ -1046,10 +1049,10 @@ svg { vertical-align: middle; }
     font-weight: 600;
 }
 
-.planning-table .today-col { background: #F1F8E9; }
+.planning-table .today-col { background: #E0F2F1; }
 
 .cours-cell {
-    background: #F1F8E9;
+    background: #E0F2F1;
     border-left: 4px solid var(--primary-light);
     border-radius: 6px;
     padding: 7px 9px;
