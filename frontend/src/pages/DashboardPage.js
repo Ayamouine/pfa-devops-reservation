@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import {
   ROLE_LABELS,
-  getAllBookings,
+  getMyBookings,
   getApprovals,
   unreadCount,
   statusClass,
@@ -20,7 +20,7 @@ export default function DashboardPage() {
   const load = useCallback(() => {
     setLoading(true);
     Promise.all([
-      getAllBookings(token),
+      getMyBookings(token, currentUser.username),
       role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN'
         ? getApprovals(token).catch(() => [])
         : Promise.resolve([]),
