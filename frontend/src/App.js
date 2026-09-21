@@ -48,7 +48,7 @@ function AdminRoute({ children }) {
 function ChefRoute({ children }) {
   const { currentUser } = useAuth();
   if (!currentUser) return <Navigate to="/login" replace />;
-  if (currentUser.role !== 'CHEF_FILIERE') return <Navigate to="/" replace />;
+  if (currentUser.role !== 'CHEF_FILIERE' && currentUser.role !== 'DOYEN') return <Navigate to="/" replace />;
   return <Layout>{children}</Layout>;
 }
 
