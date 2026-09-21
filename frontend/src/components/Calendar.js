@@ -180,7 +180,7 @@ export default function Calendar({ resource, filiere, onBook, defaultView = 'day
                   <span className={`slot-badge ${status}`}>{STATUS_LABEL[status]}</span>
                 )}
                 <span className="slot-motif">
-                  {list.map((b) => `${b.resource}${b.username ? ` · ${b.username}` : ''}`).join(', ')}
+                  {list.map((b) => `${b.motif ? `« ${b.motif} » · ` : ''}${b.resource}${b.username ? ` · ${b.username}` : ''}`).join(', ')}
                 </span>
               </div>
             );
