@@ -134,6 +134,18 @@ export default function Sidebar() {
 
       <div className="sidebar-footer">
         <div className="sidebar-user">
+          <div
+            className="sidebar-avatar"
+            style={{ backgroundColor: currentUser?.avatarColor || '#00695C' }}
+          >
+            {(fullName || currentUser?.username || '?')
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((w) => w[0])
+              .join('')
+              .toUpperCase()}
+          </div>
           <strong>{fullName}</strong>
           <span className="role-tag">{ROLE_LABELS[role] || role}</span>
         </div>

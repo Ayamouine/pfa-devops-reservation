@@ -7,7 +7,7 @@ const AVATAR_COLORS = ['#c78a3e', '#66bb6a', '#2f6f52', '#a6394a', '#5c9e6a', '#
 const INSTITUTIONAL_EMAIL = /^[\w.+-]+@uhp\.ac\.ma$/i;
 
 export default function ProfilePage() {
-  const { currentUser, token, showToast, saveProfile } = useAuth();
+  const { currentUser, token, showToast, saveProfile, updateAvatarColor } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [form, setForm] = useState({
     firstName: currentUser?.firstName || '',
@@ -156,7 +156,10 @@ export default function ProfilePage() {
                   <button
                     key={c}
                     type="button"
-                    onClick={() => setForm((f) => ({ ...f, avatarColor: c }))}
+                    onClick={() => {
+                      setForm((f) => ({ ...f, avatarColor: c }));
+                      updateAvatarColor(c);
+                    }}
                     style={{
                       width: 30,
                       height: 30,

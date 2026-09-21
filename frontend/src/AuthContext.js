@@ -126,6 +126,10 @@ export function AuthProvider({ children }) {
     return data;
   }, [token]);
 
+  const updateAvatarColor = useCallback((color) => {
+    setCurrentUser((u) => (u ? { ...u, avatarColor: color } : u));
+  }, []);
+
   const role = currentUser?.role || '';
   const value = {
     token,
@@ -151,6 +155,7 @@ export function AuthProvider({ children }) {
     reset,
     verify,
     saveProfile,
+    updateAvatarColor,
     showToast,
     toasts,
     askConfirm,
