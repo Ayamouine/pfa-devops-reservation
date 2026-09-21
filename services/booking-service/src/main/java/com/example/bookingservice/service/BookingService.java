@@ -59,7 +59,9 @@ public class BookingService {
 
     public List<Booking> getBookingsForDoyen() {
         return bookingRepository.findAll().stream()
-                .filter(b -> STATUS_APPROVED.equalsIgnoreCase(b.getStatus()))
+                .filter(b -> STATUS_APPROVED.equalsIgnoreCase(b.getStatus())
+                        || STATUS_CONFIRMED.equalsIgnoreCase(b.getStatus())
+                        || "EVENEMENT".equalsIgnoreCase(b.getBookingType()))
                 .map(this::toModel)
                 .toList();
     }
