@@ -51,7 +51,9 @@ public class AuthController {
     public ResponseEntity<java.util.Map<String, String>> forgot(@RequestBody java.util.Map<String, String> body) {
         String identifier = body.get("email") != null ? body.get("email") : body.get("username");
         String token = authService.createPasswordResetToken(identifier);
-        // In real life, send by email. Here return token for demo.
+        // TODO(email): envoyer le token par email via JavaMailSender en production.
+        // Pour la démo, on loggue le token en console et on le retourne en JSON.
+        System.out.println("[DEMO-MAIL] reset token pour " + identifier + " : " + token);
         return ResponseEntity.ok(java.util.Map.of("resetToken", token));
     }
 

@@ -66,7 +66,23 @@ export default function ForgotResetPage() {
         )}
 
         {mode === 'reset' && (
-          <form onSubmit={handleReset}>
+          <>
+            {(showToast || token) && (
+              <div className="demo-token-box" style={{
+                border: '1px dashed #00897b',
+                background: '#e0f2f1',
+                padding: '12px 14px',
+                borderRadius: 8,
+                marginBottom: 14,
+              }}>
+                <strong>Token de démonstration :</strong>{' '}
+                <code style={{ userSelect: 'all', fontWeight: 600 }}>{token}</code>
+                <p className="small-muted" style={{ margin: '8px 0 0' }}>
+                  En production, ce token serait envoyé à votre email. Il est affiché ici pour la démo.
+                </p>
+              </div>
+            )}
+            <form onSubmit={handleReset}>
             <div className="field">
               <label>Token</label>
               <input value={token} onChange={(e) => setToken(e.target.value)} required />
@@ -75,8 +91,9 @@ export default function ForgotResetPage() {
               <label>Nouveau mot de passe</label>
               <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
             </div>
-            <button className="btn btn-primary">Réinitialiser</button>
-          </form>
+              <button className="btn btn-primary">Réinitialiser</button>
+            </form>
+          </>
         )}
 
         <hr />
