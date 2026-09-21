@@ -9,6 +9,7 @@ import {
   downloadDocument,
   statusClass,
   statusLabel,
+  statusLabelFor,
 } from '../api';
 
 export default function ApprovalsPage() {
@@ -108,7 +109,7 @@ export default function ApprovalsPage() {
                   {b.bookingType === 'EVENEMENT' && ' · Événement'}
                 </div>
               </div>
-              <span className={`badge ${statusClass(b.status)}`}>{statusLabel(b.status)}</span>
+              <span className={`badge ${statusClass(b.status)}`}>{statusLabelFor(b)}</span>
             </div>
 
             <div className="approval-meta">

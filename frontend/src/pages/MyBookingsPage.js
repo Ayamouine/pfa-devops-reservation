@@ -13,6 +13,7 @@ import {
   downloadSignedDocument,
   statusClass,
   statusLabel,
+  statusLabelFor,
   checkAvailability,
   SLOTS,
 } from '../api';
@@ -324,7 +325,7 @@ export default function MyBookingsPage() {
                     </span>
                   </div>
                   <div className="ticket-right">
-                    <span className={`badge ${statusClass(b.status)}`}>{statusLabel(b.status)}</span>
+                    <span className={`badge ${statusClass(b.status)}`}>{statusLabelFor(b)}</span>
                     {(b.status === 'PENDING' || b.status === 'pending') && userCanAct(b) && (
                       <>
                         <button className="btn btn-ghost" type="button" onClick={() => startEdit(b)}>Modifier</button>
