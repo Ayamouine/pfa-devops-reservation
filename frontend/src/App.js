@@ -45,6 +45,13 @@ function AdminRoute({ children }) {
   return <Layout>{children}</Layout>;
 }
 
+function ChefRoute({ children }) {
+  const { currentUser } = useAuth();
+  if (!currentUser) return <Navigate to="/login" replace />;
+  if (currentUser.role !== 'CHEF_FILIERE') return <Navigate to="/" replace />;
+  return <Layout>{children}</Layout>;
+}
+
 function PublicOnlyRoute({ children }) {
   const { currentUser } = useAuth();
   if (currentUser) return <Navigate to="/" replace />;
@@ -67,7 +74,7 @@ function AppRoutes() {
       <Route path="/" element={<HomeRoute />} />
       <Route path="/app" element={<PrivateRoute><DashboardPage /></PrivateRoute>} />
       <Route path="/reservations" element={<PrivateRoute><MyBookingsPage /></PrivateRoute>} />
-      <Route path="/validations" element={<PrivateRoute><ApprovalsPage /></PrivateRoute>} />
+      <Route path="/validations" element={<ChefRoute><ApprovalsPage /></ChefRoute>} />
       <Route path="/notifications" element={<PrivateRoute><NotificationsPage /></PrivateRoute>} />
       <Route path="/ressources" element={<PrivateRoute><ResourcesPage /></PrivateRoute>} />
       <Route path="/calendar" element={<PrivateRoute><CalendarPage /></PrivateRoute>} />
