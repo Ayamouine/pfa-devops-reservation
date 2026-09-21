@@ -145,7 +145,7 @@ export default function ApprovalsPage() {
               </div>
             )}
 
-            {b.status === 'PENDING' && (
+            {(b.status === 'PENDING' || isDoyen && (b.status === 'APPROVED' || (b.bookingType || '').toUpperCase() === 'EVENEMENT')) && (
               <div className="approval-actions">
                 {!isDoyen ? (
                   <>
