@@ -36,16 +36,19 @@ export default function DashboardPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const list = [...myBookings]
+  const isValidator = role === 'CHEF_FILIERE' || role === 'DOYEN' || role === 'ADMIN';
+  const sourceList = isValidator ? approvals : myBookings;
+  const list = [...sourceList]
     .sort((a, b) => String(b.updatedAt || b.createdAt || '').localeCompare(String(a.updatedAt || a.createdAt || '')))
     .slice(0, 5);
 
+  const statsSource = isValidator ? approvals : myBookings;
   const stats = {
-    total: myBookings.length,
-    approved: myBookings.filter((b) => (b.status || '').toLowerCase() === 'approved').length,
-    confirmed: myBookings.filter((b) => (b.status || '').toLowerCase() === 'confirmed').length,
-    pending: myBookings.filter((b) => (b.status || '').toLowerCase() === 'pending').length,
-    rejected: myBookings.filter((b) => (b.status || '').toLowerCase() === 'rejected').length,
+    total: statsSource.length,
+    approved: statsSource.filter((b) => (b.status || '').toLowerCase() === 'approved').length,
+    confirmed: statsSource.filter((b) => (b.status || '').toLowerCase() === 'confirmed').length,
+    pending: statsSource.filter((b) => (b.status || '').toLowerCase() === 'pending').length,
+    rejected: statsSource.filter((b) => (b.status || '').toLowerCase() === 'rejected').length,
   };
 
   return (
