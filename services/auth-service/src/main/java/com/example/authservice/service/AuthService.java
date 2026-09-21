@@ -36,6 +36,12 @@ public class AuthService {
     private static final java.util.regex.Pattern INSTITUTIONAL_EMAIL =
             java.util.regex.Pattern.compile("^[\\w.+-]+@uhp\\.ac\\.ma$", java.util.regex.Pattern.CASE_INSENSITIVE);
 
+    private static final java.util.regex.Pattern STUDENT_INSTITUTIONAL_EMAIL =
+            java.util.regex.Pattern.compile("^[a-z]+\\.[a-z]+\\.fst@uhp\\.ac\\.ma$", java.util.regex.Pattern.CASE_INSENSITIVE);
+
+    private static final java.util.regex.Pattern GENERIC_EMAIL =
+            java.util.regex.Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+
     private final String secret;
     private final String adminRegistrationCode;
     private final String profRegistrationCode;
@@ -76,11 +82,16 @@ public class AuthService {
     public AuthResponse register(RegisterRequest request) {
         String email = normalizeEmail(request.getEmail());
         if (email == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'email institutionnel est requis");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "L'email est requis");
         }
-        if (!INSTITUTIONAL_EMAIL.matcher(email).matches()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
-                    "Email institutionnel invalide (format attendu : prenom.nom.fst@uhp.ac.ma)");
+        String submittedRole = request.getRole() == null || request.getRole().isBlank() ? "USER" : request.getRole();
+        if ("ETUDIANT".equalsIgnoreCase(submittedRole)) {
+            if (!STUDENT_INSTITUTIONAL_EMAIL.matcher(email).matches()) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Email étudiant invalide (format attendu : nom.prenom.fst@uhp.ac.ma)");
+            }
+        } else if (!GENERIC_EMAIL.matcher(email).matches()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Email invalide (format attendu : x@y.zz)");
         }
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");

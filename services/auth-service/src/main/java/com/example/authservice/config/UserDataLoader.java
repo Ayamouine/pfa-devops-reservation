@@ -21,20 +21,20 @@ public class UserDataLoader {
     CommandLineRunner seedUsers(AppUserRepository userRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             upsert(userRepository, passwordEncoder, "admin", "admin123", "ADMIN",
-                    "Salma", "El Idrissi", null, null, "salma.elidrissi.fst@uhp.ac.ma");
+                    "Salma", "El Idrissi", null, null, "salma.elidrissi@gmail.com");
             upsert(userRepository, passwordEncoder, "doyen", "doyen123", "DOYEN",
-                    "Karim", "Benali", null, null, "karim.benali.fst@uhp.ac.ma");
+                    "Karim", "Benali", null, null, "karim.benali@gmail.com");
             upsert(userRepository, passwordEncoder, "chef", "chef123", "CHEF_FILIERE",
-                    "Nadia", "Alaoui", INFO, null, "nadia.alaoui.fst@uhp.ac.ma");
+                    "Nadia", "Alaoui", INFO, null, "nadia.alaoui@gmail.com");
             upsert(userRepository, passwordEncoder, "prof", "prof123", "PROF",
-                    "Youssef", "Tazi", INFO, null, "youssef.tazi.fst@uhp.ac.ma");
+                    "Youssef", "Tazi", INFO, null, "youssef.tazi@gmail.com");
             upsert(userRepository, passwordEncoder, "etudiant", "etudiant123", "ETUDIANT",
                     "Imane", "Rachidi", INFO, null, "imane.rachidi.fst@uhp.ac.ma");
 
             for (String club : CLUBS) {
                 String slug = club.toLowerCase();
                 upsert(userRepository, passwordEncoder, "club." + slug, "club123", "CLUB",
-                        "Club " + club, "", null, club, "club." + slug + ".fst@uhp.ac.ma");
+                        "Club " + club, "", null, club, "club." + slug + "@gmail.com");
             }
         };
     }

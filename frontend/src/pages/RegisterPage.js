@@ -15,6 +15,8 @@ const ROLES = [
 const LOGO = 'https://www.fsts.ac.ma/images/fsts_logo.png';
 
 const INSTITUTIONAL_EMAIL = /^[\w.+-]+@uhp\.ac\.ma$/i;
+const STUDENT_INSTITUTIONAL_EMAIL = /^[a-z]+\.[a-z]+\.fst@uhp\.ac\.ma$/i;
+const GENERIC_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function RegisterPage() {
   const { register, showToast } = useAuth();
@@ -46,8 +48,13 @@ export default function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!INSTITUTIONAL_EMAIL.test(form.email)) {
-      setError("Email institutionnel invalide (format attendu : prenom.nom.fst@uhp.ac.ma)");
+    if (form.role === 'ETUDIANT') {
+      if (!STUDENT_INSTITUTIONAL_EMAIL.test(form.email)) {
+        setError("L'email étudiant doit être au format nom.prénom.fst@uhp.ac.ma");
+        return;
+      }
+    } else if (!GENERIC_EMAIL.test(form.email)) {
+      setError('Email invalide');
       return;
     }
     setLoading(true);
