@@ -88,7 +88,7 @@ class AuthServiceTest {
     @Test
     void register_createsAdmin_whenAdminCodeIsCorrect() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("etudiant.test.fst@uhp.ac.ma");
+        request.setEmail("admin.test@gmail.com");
         request.setUsername("boss");
         request.setPassword("secret123");
         request.setRole("ADMIN");
@@ -106,7 +106,7 @@ class AuthServiceTest {
     @Test
     void register_throwsForbidden_whenAdminCodeIsWrong() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("etudiant.test.fst@uhp.ac.ma");
+        request.setEmail("admin.test@gmail.com");
         request.setUsername("boss");
         request.setPassword("secret123");
         request.setRole("ADMIN");
@@ -184,7 +184,7 @@ class AuthServiceTest {
     @Test
     void register_createsProf_whenProfCodeIsCorrect() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("prof.test.fst@uhp.ac.ma");
+        request.setEmail("prof.test@gmail.com");
         request.setUsername("prof1");
         request.setPassword("secret123");
         request.setRole("PROF");
@@ -207,7 +207,7 @@ class AuthServiceTest {
     @Test
     void register_throwsForbidden_whenProfCodeIsWrong() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("prof.test.fst@uhp.ac.ma");
+        request.setEmail("prof.test@gmail.com");
         request.setUsername("prof1");
         request.setPassword("secret123");
         request.setRole("PROF");
@@ -223,7 +223,7 @@ class AuthServiceTest {
     @Test
     void register_createsChefFiliere_whenChefCodeIsCorrectAndFiliereProvided() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("chef.test.fst@uhp.ac.ma");
+        request.setEmail("chef.test@gmail.com");
         request.setUsername("chef1");
         request.setPassword("secret123");
         request.setRole("CHEF_FILIERE");
@@ -243,7 +243,7 @@ class AuthServiceTest {
     @Test
     void register_throwsBadRequest_whenChefCodeGivenButNoFiliere() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("chef.test.fst@uhp.ac.ma");
+        request.setEmail("chef.test@gmail.com");
         request.setUsername("chef1");
         request.setPassword("secret123");
         request.setRole("CHEF_FILIERE");
@@ -259,7 +259,7 @@ class AuthServiceTest {
     @Test
     void register_createsDoyen_whenDoyenCodeIsCorrect() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("doyen.test.fst@uhp.ac.ma");
+        request.setEmail("doyen.test@gmail.com");
         request.setUsername("doyen1");
         request.setPassword("secret123");
         request.setRole("DOYEN");
@@ -277,7 +277,7 @@ class AuthServiceTest {
     @Test
     void register_throwsForbidden_whenDoyenCodeIsWrong() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("doyen.test.fst@uhp.ac.ma");
+        request.setEmail("doyen.test@gmail.com");
         request.setUsername("doyen1");
         request.setPassword("secret123");
         request.setRole("DOYEN");
@@ -330,7 +330,7 @@ class AuthServiceTest {
     @Test
     void createUser_throwsBadRequest_whenChefWithoutFiliere() {
         RegisterRequest request = new RegisterRequest();
-        request.setEmail("chef.test.fst@uhp.ac.ma");
+        request.setEmail("chef.test@gmail.com");
         request.setUsername("chef2");
         request.setPassword("secret123");
         request.setRole("CHEF_FILIERE");
@@ -361,7 +361,7 @@ class AuthServiceTest {
     void register_createsClub_whenClubCodeAndClubProvided() {
         RegisterRequest request = new RegisterRequest();
         request.setUsername("club.clic");
-        request.setEmail("club.clic.fst@uhp.ac.ma");
+        request.setEmail("club.clic@gmail.com");
         request.setPassword("secret123");
         request.setRole("CLUB");
         request.setAdminCode("test-club-code");
@@ -381,7 +381,7 @@ class AuthServiceTest {
     void register_throwsBadRequest_whenClubWithoutClubName() {
         RegisterRequest request = new RegisterRequest();
         request.setUsername("club.x");
-        request.setEmail("club.x.fst@uhp.ac.ma");
+        request.setEmail("club.x@gmail.com");
         request.setPassword("secret123");
         request.setRole("CLUB");
         request.setAdminCode("test-club-code");
