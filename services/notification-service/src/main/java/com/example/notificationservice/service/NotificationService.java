@@ -53,16 +53,14 @@ public class NotificationService {
     public List<Notification> getMyNotifications(String username, String role, String filiere) {
         Set<Notification> result = new LinkedHashSet<>();
         result.addAll(notificationRepository.findByUsername(username));
-        if (role != null && !role.isBlank()) {
-            if ("DOYEN".equalsIgnoreCase(role) || "ADMIN".equalsIgnoreCase(role)) {
-                result.addAll(notificationRepository.findAll());
-            } else {
+        if ("ADMIN".equalsIgnoreCase(role)) {
+            result.addAll(notificationRepository.findAll());
+        } else {
+            if (role != null && !role.isBlank()) {
                 result.addAll(notificationRepository.findByTarget("ROLE:" + role.toUpperCase()));
             }
-        }
-        if (filiere != null && !filiere.isBlank()) {
-            for (Notification n : notificationRepository.findByTarget("ROLE:CHEF_FILIERE:" + filiere)) {
-                result.add(n);
+            if (filiere != null && !filiere.isBlank()) {
+                result.addAll(notificationRepository.findByTarget("ROLE:CHEF_FILIERE:" + filiere));
             }
         }
         List<Notification> sorted = new ArrayList<>(result);
